@@ -14,4 +14,3 @@ cd nervox\datasets
 tfds new my_dataset  # Create `my_dataset/my_dataset.py` template files 
 # Edit the my_dataset.py to implement the your dataset...
 cd my_dataset/
-```
