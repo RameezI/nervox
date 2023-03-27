@@ -1,0 +1,8 @@
+*idea/*
+*idea*
+/venv_*/
+*.egg-info/*
+__pycache__/*
+*.pyc
+*.code-workspace
+.vscode/
