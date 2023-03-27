@@ -31,17 +31,17 @@ def train(args: argparse.Namespace):
     
     # Training
     trainer = Trainer(train_stream, eval_stream, name='cifar10',
-                      ckpt_opts={'monitor': 'accuracy/val'},)
-                      #export_opts= {'signature': serve_signature})
+                      ckpt_opts={'monitor': 'accuracy/val'},
+                      export_opts= {'signature': serve_signature})
 
     # Add one or more models as required by the protocol
-    trainer.push_model(args.encoder, alias='encoder', config={})
-    trainer.push_model(GlobalAvgPoolDecoder, alias='decoder',
+    trainer.push_module(args.encoder, alias='encoder', config={})
+    trainer.push_module(GlobalAvgPoolDecoder, alias='decoder',
                        config={'output_units': 10})
     
     # training protocol
     protocol = Classification(('image', 'label'))
-    trainer.spin(protocol, max_epochs=50, callback_list=[],
+    trainer.spin(protocol, max_epochs=1, callback_list=[],
                  verbose=VerbosityLevel.UPDATE_AT_BATCH,
                  # skip_initial_evaluation=True,
                  )

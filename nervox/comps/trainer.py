@@ -17,7 +17,7 @@ import tensorflow as tf
 
 from pathlib import Path
 from nervox.core.callbacks import Callback
-from typing import Union, List, Tuple, Dict, Iterable, Type, Any, Collection
+from typing import Union, List, Tuple, Dict, Iterable, Type, Any
 
 # graph analysis tools
 from tensorflow.python.profiler.model_analyzer import profile
@@ -50,7 +50,7 @@ CallbackList = tf.keras.callbacks.CallbackList
 
 
 class Trainer:
-    # TensorFlow Distribution Schemes Validated by the nervox Trainer
+    # TensorFlow Distribution Schemes Validated by the nervox trainer
     named_distribution_schemes = {
         "one_device_cpu": tf.distribute.OneDeviceStrategy(device="/cpu:0"),
         "one_device_gpu": tf.distribute.OneDeviceStrategy(device="/gpu:0"),
@@ -279,7 +279,7 @@ class Trainer:
         if len(matched_keys) > 1:
             raise RuntimeError(multi_match_msg)
 
-    def push_model(
+    def push_module(
         self,
         model: Tuple[str, Type[tf.keras.Model]],
         config: Union[dict, None] = None,
@@ -393,7 +393,7 @@ class Trainer:
                 raise RuntimeError(
                     f"The trainer has no computational graph, unable to compile the strategy.\n"
                     f"You can add one or more models to the trainer via add_model method:\n"
-                    f"{self.push_model.__doc__}"
+                    f"{self.push_module.__doc__}"
                 )
             try:
                 protocol.compile(self._models)

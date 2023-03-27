@@ -30,8 +30,8 @@ class TestExporter(tf.test.TestCase):
     
     def create_checkpoint(self, model, logs_dir, run_id):
         trainer = Trainer(self.dummy_train_stream, logs_dir=logs_dir, run_id=run_id)
-        trainer.push_model(model, alias='encoder')
-        trainer.push_model(GlobalAvgPoolDecoder, alias='decoder',
+        trainer.push_module(model, alias='encoder')
+        trainer.push_module(GlobalAvgPoolDecoder, alias='decoder',
                            config={'output_units': 10})
         strategy = Classification(supervision_keys=('image', 'label'))
         trainer.spin(strategy, max_epochs=1)
@@ -39,8 +39,8 @@ class TestExporter(tf.test.TestCase):
     
     def resume_from_checkpoint(self, model, logs_dir, run_id):
         trainer = Trainer(self.dummy_train_stream, logs_dir=logs_dir, run_id=run_id)
-        trainer.push_model(model, alias='encoder')
-        trainer.push_model(GlobalAvgPoolDecoder, alias='decoder',
+        trainer.push_module(model, alias='encoder')
+        trainer.push_module(GlobalAvgPoolDecoder, alias='decoder',
                            config={'output_units': 10})
         strategy = Classification(supervision_keys=('image', 'label'))
         trainer.spin(strategy, max_epochs=2)

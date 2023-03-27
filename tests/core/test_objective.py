@@ -79,7 +79,7 @@ class TestObjective(tf.test.TestCase, parameterized.TestCase):
         
         with tempfile.TemporaryDirectory() as tempdir:
             trainer = Trainer(self.dummy_train_stream, logs_dir=tempdir)
-            trainer.push_model(DummyModel, alias='model')
+            trainer.push_module(DummyModel, alias='model')
             
             try:
                 trainer.spin(self.protocol, max_epochs=1, run_eagerly=run_eagerly)

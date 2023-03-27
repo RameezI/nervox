@@ -55,8 +55,8 @@ class TestCheckPointer(tf.test.TestCase):
                           logs_dir=logs_dir,
                           run_id=run_id)
         
-        trainer.push_model(model_type, alias='encoder')
-        trainer.push_model(GlobalAvgPoolDecoder, alias='decoder',
+        trainer.push_module(model_type, alias='encoder')
+        trainer.push_module(GlobalAvgPoolDecoder, alias='decoder',
                            config={'output_units': 10})
         
         strategy = Classification(supervision_keys=('image', 'label'))

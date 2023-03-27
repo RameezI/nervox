@@ -58,15 +58,15 @@ class TestTrainer(tf.test.TestCase):
         dataset = tf.data.Dataset.from_tensor_slices([1, 2, 3])
         stream = DataStream(dataset)
         trainer = Trainer(stream)
-        trainer.push_model('convnet', alias='model')
+        trainer.push_module('convnet', alias='model')
         self.assertTrue(isinstance(trainer.models['model'], tf.keras.Model))
     
     def test_multiple_model_addition(self):
         dataset = tf.data.Dataset.from_tensor_slices([1, 2, 3])
         stream = DataStream(dataset)
         trainer = Trainer(stream)
-        trainer.push_model('convnet', alias='encoder')
-        trainer.push_model('convnet', alias='decoder')
+        trainer.push_module('convnet', alias='encoder')
+        trainer.push_module('convnet', alias='decoder')
         self.assertTrue(isinstance(trainer.models['encoder'], tf.keras.Model))
         self.assertTrue(isinstance(trainer.models['decoder'], tf.keras.Model))
     
@@ -74,16 +74,16 @@ class TestTrainer(tf.test.TestCase):
         dataset = tf.data.Dataset.from_tensor_slices([1, 2, 3])
         stream = DataStream(dataset)
         trainer = Trainer(stream)
-        trainer.push_model('convnet')
+        trainer.push_module('convnet')
         self.assertTrue(all(key in trainer.models.keys() for key in ['model']))
-        trainer.push_model('convnet')
+        trainer.push_module('convnet')
         self.assertTrue(all(key in trainer.models.keys() for key in ['model', 'model_1']))
     
     def test_spinning_invocation(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             trainer = Trainer(self.dummy_train_stream, logs_dir=temp_dir)
-            trainer.push_model('convnet', alias='encoder')
-            trainer.push_model(GlobalAvgPoolDecoder, alias='decoder',
+            trainer.push_module('convnet', alias='encoder')
+            trainer.push_module(GlobalAvgPoolDecoder, alias='decoder',
                                config={'output_units': 101})
             strategy = Classification(supervision_keys=('image', 'label'))
             trainer.spin(strategy, max_epochs=1)
@@ -93,10 +93,10 @@ class TestTrainer(tf.test.TestCase):
             trainer = Trainer(self.dummy_train_stream, logs_dir=temp_dir)
             
             # push models to the trainer and test with classification strategy
-            trainer.push_model(DenseNet121, alias='encoder',
+            trainer.push_module(DenseNet121, alias='encoder',
                                config={'trainable': False,
                                        'weights': 'imagenet'})
-            trainer.push_model(GlobalAvgPoolDecoder, alias='decoder',
+            trainer.push_module(GlobalAvgPoolDecoder, alias='decoder',
                                config={'output_units': 101})
             
             # record weights when initialized with `imagenet`
