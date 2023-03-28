@@ -4,7 +4,7 @@ Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
 import tensorflow as tf
-from typing import Sequence, Union, Callable, Dict
+from typing import Union, Callable, Dict, Collection
 
 from nervox.utils.distribution \
     import DistributedLossWrapper
@@ -27,8 +27,7 @@ class Objective(tf.Module):
     """
     
     def __init__(self, loss: tf.keras.losses.Loss, optimizer: tf.keras.optimizers.Optimizer, *,
-                 name: str = 'objective',
-                 metrics: Sequence[Metric] = tuple()):
+                 metrics: Collection[Metric] = tuple(), name: str = 'objective'):
         super().__init__(name)
         self._optimizer = optimizer
         self._loss: DistributedLossWrapper = DistributedLossWrapper(loss)
@@ -91,9 +90,15 @@ class Objective(tf.Module):
         Returns:
         """
     
-    def update_metrics(self, *args, exclude: Sequence[str] = ('loss',), **kwargs) -> None:
+    def update_metrics(self, *args, exclude: Collection[str] = ('loss',), **kwargs) -> None:
         metrics = filter(lambda x: True if x.name not in exclude else False, self.metrics)
         for metric in metrics:
             metric.update(*args, **kwargs)
         # map(lambda x: x.update(*args, **kwargs), metrics)
     
+
+
+# class ObjectiveConfigurer(ABC):
+#     @abstracmethod
+#     def __call__(self) -> Union[Objective, Collection[Objective]]:
+#         pass

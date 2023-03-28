@@ -14,6 +14,7 @@ from nervox.data.transforms import Normalize, OneHotLabels
 from nervox.data import DataStream
 from nervox.models.terminals import GlobalAvgPoolDecoder
 
+
 def train(args: argparse.Namespace):
     # data stream for training
     train_stream = DataStream('cifar10', version=args.dataset_version, split='train',
@@ -40,7 +41,7 @@ def train(args: argparse.Namespace):
                        config={'output_units': 10})
     
     # training protocol
-    protocol = Classification(('image', 'label'))
+    protocol = Classification(supervision_keys=('image', 'label'))
     trainer.spin(protocol, max_epochs=1, callback_list=[],
                  verbose=VerbosityLevel.UPDATE_AT_BATCH,
                  # skip_initial_evaluation=True,

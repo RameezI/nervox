@@ -5,18 +5,14 @@ Email: rameez.ismaeel@gmail.com
 """
 
 import tensorflow as tf
-from enum import Enum
-from typing import Tuple, Dict, Union, Any
-
+from typing import Tuple, Dict, Union, Callable
 from nervox.core.protocol import Protocol
-from nervox.core.objective import Objective
-from nervox.metrics.classification import (
-    onehot_transform,
-    AccuracyScore,
-    AveragingMode,
-)
+from nervox.core import Objective
 
+# objective configurator
 from nervox.losses import CrossEntropy
+from nervox.metrics.classification import AccuracyScore, AveragingMode
+from nervox.transforms import onehot_transform
 
 
 class Classification(Protocol):
@@ -24,32 +20,30 @@ class Classification(Protocol):
         """
         Args:
             supervision_keys:   An ordered pair of strings; where the first element represents the key for the
-                                input data while the second element represent the key for the label.
+                                input data while the second element represents the key for the label.
         """
 
         super(Classification, self).__init__()
         self.supervision_keys = supervision_keys
 
     @staticmethod
-    def configure():
+    def objective_configurator():
         """
-        Configure method provides a placeholder for defining/configuring the objective/objectives for the strategy.
-        The configure method can be overridden through the `configure_cb` argument of the protocol constructor.
+        Configure method provides a placeholder for defining/configuring the objective(s) for the strategy.
+        The configure method can be overridden through the `configurator` argument of the constructor.
+        The configurator is user supplied function/functor that returns objective(s) for the training.
         For more permissive customization, user must write a new protocol or derive from an existing one.
         """
         optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-        categorical_xentropy = CrossEntropy(transform=tf.nn.sigmoid)
-
+        xentropy = CrossEntropy(transform=tf.nn.sigmoid)
         accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
-        objective = Objective(
-            categorical_xentropy, optimizer=optimizer, metrics=[accuracy]
-        )
+        objective = Objective(xentropy, optimizer=optimizer, metrics=[accuracy])
         return objective
 
     def train_step(self, batch: Dict[str, tf.Tensor]) -> None:
         """
         Args:
-            batch:                      A batch of data with various features
+            batch:  A batch of data with various features
         """
 
         data, labels = batch[self.supervision_keys[0]], batch[self.supervision_keys[1]]
@@ -73,7 +67,6 @@ class Classification(Protocol):
         objective.update_metrics(labels, predictions)
 
     def evaluate_step(self, batch: Dict[str, tf.Tensor]):
-
         data, labels = batch[self.supervision_keys[0]], batch[self.supervision_keys[1]]
 
         # aliases

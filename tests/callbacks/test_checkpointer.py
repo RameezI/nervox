@@ -29,7 +29,7 @@ Optimizer = tf.keras.optimizers.Optimizer
 
 class TestProtocol(Classification):
     @staticmethod
-    def configure(optimizer: Optimizer):
+    def objective_configurator(optimizer: Optimizer):
         return (Optimizer)
         
         

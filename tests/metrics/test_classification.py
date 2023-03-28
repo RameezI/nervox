@@ -5,10 +5,9 @@ Email: rameez.ismaeel@gmail.com
 """
 import numpy as np
 import tensorflow as tf
-from nervox.metrics import \
-    onehot_transform, sigmoid_transform, compute_confusion_matrix, AveragingMode, \
+from nervox.metrics import compute_confusion_matrix, AveragingMode, \
     AccuracyScore, PrecisionScore, AveragePrecisionScore, RecallScore
-
+from nervox.transforms import onehot_transform
 from sklearn.metrics import average_precision_score
 
 
@@ -454,7 +453,7 @@ class TestAveragePrecisionScore(tf.test.TestCase):
             average_precision_score(labels, scores, average="micro")
         self.assertAllClose(expectation, result)
 
-        mAP = AveragePrecisionScore(transform=sigmoid_transform,
+        mAP = AveragePrecisionScore(transform=tf.nn.sigmoid,
                                     averaging_mode=AveragingMode.MICRO,
                                     bifurcators=500)
         

@@ -35,7 +35,7 @@ class DummyModel(tf.keras.Model):
 
 class DummyProtocol(Protocol):
     @staticmethod
-    def configure(model):
+    def objective_configurator(model):
         optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
         loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
         model.compile(optimizer=optimizer, loss=loss)

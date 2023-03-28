@@ -142,7 +142,7 @@ class Protocol(tf.Module):
             )
 
     def _compile_compliance_check(self, models):
-        params = inspect.signature(self.configure).parameters.values()
+        params = inspect.signature(self.objective_configurator).parameters.values()
         unsupported_kinds = [
             inspect.Parameter.POSITIONAL_ONLY,
             inspect.Parameter.VAR_POSITIONAL,
@@ -179,7 +179,7 @@ class Protocol(tf.Module):
                     f" dictionary of the trainer instance.\n"
                     f"A subset of these alias also constitutes a valid argument list!\n"
                     f"The discrepancy:\n"
-                    f"`configure` signature: {inspect.signature(self.configure)}\n"
+                    f"`configure` signature: {inspect.signature(self.objective_configurator)}\n"
                     f"model keys: {list(models.keys())}"
                 )
         else:
@@ -234,7 +234,7 @@ class Protocol(tf.Module):
 
         self._set_models(models)  # Link models from the outer scope with the protocol.
         self._set_objectives(
-            self.configure(**required_models)
+            self.objective_configurator(**required_models)
         )  # set objective/objectives.
 
         # compiled_step functions for train and evaluate
@@ -244,22 +244,19 @@ class Protocol(tf.Module):
         self._is_compiled = True
 
     @staticmethod
-    def configure(**kwargs: tf.keras.Model) -> Union[Dict[str, Objective], Objective]:
+    def objective_configurator(**kwargs: tf.keras.Model) -> Union[Dict[str, Objective], Objective]:
         """
         Constructs a learning objective for the trainer. The method optionally accepts models, using their aliases as
          keyword/named arguments. Any model that need modification/inspection can be listed as named argument in the
         `configure` method, using its alias registered with the trainer.
         Args:
-            **kwargs:     Accepts (zero or more) models provided as keyword arguments using their aliases.
+            **kwargs: Accepts (zero or more) models provided as keyword arguments using their aliases.
         Returns:
             A nervox.core.Objective or a named collection of such objectives.
         """
-        raise NotImplementedError(
-            """Lacking a configure method!
-             The training strategy does not provide a `configure` method. A strategy without this method cannot
-             be actualized as the objective setting cannot be realized. Please provide a `configure` method
-             for your strategy, which must return an objective."""
-        )
+        raise NotImplementedError("Lacking `objective_configurator` method!\n"\
+             "The  protocol does not provide an `objective_configurator` method.\n"\
+             "Please provide an `objective_configurator` for your protocol, which describes the objective(s) to be optimized.\n")
 
     def train_step(self, input):
         raise NotImplementedError(

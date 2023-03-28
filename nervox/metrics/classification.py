@@ -25,20 +25,10 @@ class AveragingMode(Enum):
     WEIGHTED = 'weighted'
 
 
-def onehot_transform(x: TensorLike, axis=-1) -> tf.Tensor:
-    indices = tf.argmax(x, axis=axis)
-    onehot_predictions = tf.one_hot(indices, depth=x.shape[axis])
-    return onehot_predictions
-
-
-def sigmoid_transform(x: TensorLike) -> tf.Tensor:
-    sigmoid_predictions = tf.sigmoid(x)
-    return sigmoid_predictions
-
-
-def multihot_transform(x: TensorLike, threshold=0.5) -> tf.Tensor:
-    multihot_encoding = tf.cast(x > threshold, x.dtype)
-    return multihot_encoding
+# def onehot_transform(x: TensorLike, axis=-1) -> tf.Tensor:
+#     indices = tf.argmax(x, axis=axis)
+#     onehot_predictions = tf.one_hot(indices, depth=x.shape[axis])
+#     return onehot_predictions
 
 
 def compute_confusion_matrix(y_true: TensorLike, y_pred: TensorLike,
