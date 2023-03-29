@@ -27,12 +27,12 @@ class Protocol(tf.Module):
         _subclass_init = cls.__init__
 
         def init_protocol_subclass(self, configurator=None, **kwargs):
-            super(cls, self).__init__(configurator=configurator, **kwargs)
+            super(cls, self).__init__(configurator=configurator)
             _subclass_init(self, **kwargs)
 
         cls.__init__ = init_protocol_subclass
 
-    def __init__(self, configurator=None, **kwargs):
+    def __init__(self, configurator=None):
         name = snake_to_camel(self.__module__, splitter=".")
         super(Protocol, self).__init__(name=name)
         self._cluster_coordinator: Union[None, Protocol.ClusterCoordinator] = None
