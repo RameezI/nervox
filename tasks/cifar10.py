@@ -14,6 +14,20 @@ from nervox.data.transforms import Normalize, OneHotLabels
 from nervox.data import DataStream
 from nervox.models.terminals import GlobalAvgPoolDecoder
 
+# objective configurator
+from nervox.losses import CrossEntropy
+from nervox.metrics.classification import AccuracyScore, AveragingMode
+from nervox.transforms import onehot_transform
+from nervox.core import Objective
+
+
+def objective_configurer() -> Objective:
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    xentropy = CrossEntropy(transform=tf.nn.sigmoid)
+    accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
+    objective = Objective(xentropy, optimizer=optimizer, metrics=[accuracy])
+    return objective
+
 
 def train(args: argparse.Namespace):
     # data stream for training
@@ -41,7 +55,9 @@ def train(args: argparse.Namespace):
                        config={'output_units': 10})
     
     # training protocol
-    protocol = Classification(supervision_keys=('image', 'label'))
+    protocol = Classification(supervision_keys=('image', 'label'), 
+                              configurator=objective_configurer)
+    
     trainer.spin(protocol, max_epochs=1, callback_list=[],
                  verbose=VerbosityLevel.UPDATE_AT_BATCH,
                  # skip_initial_evaluation=True,

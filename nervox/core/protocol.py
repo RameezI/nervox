@@ -22,7 +22,17 @@ CallbackList = tf.keras.callbacks.CallbackList
 class Protocol(tf.Module):
     ClusterCoordinator = distribute.experimental.coordinator.ClusterCoordinator
 
-    def __init__(self):
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        _subclass_init = cls.__init__
+
+        def init_protocol_subclass(self, configurator=None, **kwargs):
+            super(cls, self).__init__(configurator=configurator, **kwargs)
+            _subclass_init(self, **kwargs)
+
+        cls.__init__ = init_protocol_subclass
+
+    def __init__(self, configurator=None, **kwargs):
         name = snake_to_camel(self.__module__, splitter=".")
         super(Protocol, self).__init__(name=name)
         self._cluster_coordinator: Union[None, Protocol.ClusterCoordinator] = None
@@ -40,6 +50,10 @@ class Protocol(tf.Module):
         self.train_step_tf = None
         self.evaluate_step_tf = None
         self.predict_step_tf = None
+
+        self.objective_configurator = (
+            type(self).objective_configurator if configurator is None else configurator
+        )
 
     @property
     def is_initialized(self):
@@ -169,7 +183,6 @@ class Protocol(tf.Module):
             and all([isinstance(model, tf.keras.Model) for model in models.values()])
             and all([isinstance(key, str) for key in models.keys()])
         ):
-
             if not all([arg in models.keys() for arg in required_named_args]):
                 raise RuntimeError(
                     f"Unable to populate models!\n"
@@ -244,7 +257,9 @@ class Protocol(tf.Module):
         self._is_compiled = True
 
     @staticmethod
-    def objective_configurator(**kwargs: tf.keras.Model) -> Union[Dict[str, Objective], Objective]:
+    def objective_configurator(
+        **kwargs: tf.keras.Model,
+    ) -> Union[Dict[str, Objective], Objective]:
         """
         Constructs a learning objective for the trainer. The method optionally accepts models, using their aliases as
          keyword/named arguments. Any model that need modification/inspection can be listed as named argument in the
@@ -254,9 +269,11 @@ class Protocol(tf.Module):
         Returns:
             A nervox.core.Objective or a named collection of such objectives.
         """
-        raise NotImplementedError("Lacking `objective_configurator` method!\n"\
-             "The  protocol does not provide an `objective_configurator` method.\n"\
-             "Please provide an `objective_configurator` for your protocol, which describes the objective(s) to be optimized.\n")
+        raise NotImplementedError(
+            "Lacking `objective_configurator` method!\n"
+            "The  protocol does not provide an `objective_configurator` method.\n"
+            "Please provide an `objective_configurator` for your protocol, which describes the objective(s) to be optimized.\n"
+        )
 
     def train_step(self, input):
         raise NotImplementedError(
@@ -290,7 +307,6 @@ class Protocol(tf.Module):
         postfix="train",
         **kwargs,
     ) -> Dict[str, any]:
-
         examples_processed = 0
         self.reset_metrics()
 
@@ -319,7 +335,6 @@ class Protocol(tf.Module):
         postfix="val",
         **kwargs,
     ) -> Dict[str, any]:
-
         examples_processed = 0
         self.reset_metrics()
 
@@ -348,7 +363,9 @@ class Protocol(tf.Module):
         """Export this protocol as as a saved model"""
 
         if self._is_compiled and signature:
-            self.predict_step_tf = tf.function(self.predict_step, input_signature=signature)
+            self.predict_step_tf = tf.function(
+                self.predict_step, input_signature=signature
+            )
             tf.saved_model.save(self, destination, signatures=self.predict_step_tf)
 
         elif self._is_compiled:

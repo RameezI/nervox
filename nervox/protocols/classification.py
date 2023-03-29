@@ -22,8 +22,6 @@ class Classification(Protocol):
             supervision_keys:   An ordered pair of strings; where the first element represents the key for the
                                 input data while the second element represents the key for the label.
         """
-
-        super(Classification, self).__init__()
         self.supervision_keys = supervision_keys
 
     @staticmethod
