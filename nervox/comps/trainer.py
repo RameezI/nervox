@@ -44,7 +44,7 @@ tf.autograph.set_verbosity(1)  # put 10 for high verbosity
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 logger = logging.getLogger(__name__)
-
+logger.setLevel(logging.INFO)
 # Aliases
 CallbackList = tf.keras.callbacks.CallbackList
 
@@ -70,13 +70,14 @@ class Trainer:
     ):
         """
         Args:
-            train_stream:
-            eval_stream:
-            name:
-            run_id:
-            logs_dir:
-            distributor:
-            ckpt_opts:          Checkpoint options for the trainer. User can supply a dictionary of desired options.
+            train_stream:      A DataStream or tf.data.Dataset object for training.
+            eval_stream:       A DataStream or tf.data.Dataset object for evaluation.
+            name:              Name of the experiment/task to be executed by the trainer.
+            run_id:            Unique identifier for the run. If not provided, a timestamp will be generated as UUID.
+            logs_dir:          The directory where the logs will be stored. If not provided, the logs will be stored in the default location.
+            distributor:       The distribution strategy to be used for training. If not provided, the training will be done on a single device.
+                                See TensorFlow documentation for more details on distribution strategies. [here](https://www.tensorflow.org/guide/distributed_training)
+            ckpt_opts:         Checkpoint options for the trainer. User can supply a dictionary of desired options.
         """
 
         default_log_dir = os.path.join(os.path.expanduser("~"), "tensorflow_logs")
@@ -85,7 +86,7 @@ class Trainer:
         self._run_id = get_urid() if run_id is None else run_id
         self._models = {}
 
-        # convert to canonical form
+        # convert the streams to a canonical form
         if isinstance(train_stream, tf.data.Dataset):
             train_stream = DataStream(train_stream, split="train")
 
@@ -122,6 +123,9 @@ class Trainer:
 
         # Progress bar
         self._progress_bar = ProgressBar()
+
+        # create run_dir if it does not exit
+        self.run_dir.mkdir(parents=True, exist_ok=True)
 
     @property
     def logs_dir(self):
@@ -240,7 +244,7 @@ class Trainer:
         self, train: DataStream, evaluate: DataStream = None
     ) -> Dict[str, DataStream]:
         """
-        This Connects the data_streams with the trainer. The data streams are mutable objects, therefore,  any changes
+        This Connects the data_streams with the trainer. The data streams are mutable objects, therefore, any changes
         to data streams in the outer scope will be reflected within the trainer as well and vice-versa.
         Args:
             train: The 'DataSteam' object that will be used for the training purpose
@@ -290,8 +294,7 @@ class Trainer:
     ) -> None:
         """
         This pushes a model to the trainer. Multiple models can be added by repeated calls to the method, in which case
-        a dictionary of models is maintained by the trainer. The trainer forwards these models to any strategy object
-        passed to the spin method of the trainer object.
+        a dictionary of models is maintained by the trainer. The trainer forwards these models to the protocol for training.
 
         Args:
             model:              A type derived from tf.keras.Model class or a string referring to the module that
@@ -299,15 +302,14 @@ class Trainer:
             config:             Configuration required to instantiate the `model`.
             alias:              The key under which the model will be saved, the model will be renamed accordingly
             pkg:                Python package containing the module (ignored when a tf.kera.Model subclass is provided)
-            inception_class:    The top level class of the module that is to be instantiated. When None the trainer
-                                determines the class itself.
+            inception_class:    The top level class of the module that is to be instantiated. When `None` the trainer
+                                aims at determining the class itself:
+                                     When more than classes are in the moduel, the class with the same name as the
+                                     module file (camelcase) is searched for and selectted as the inception class.
             overwrite:          When True, trainer overwrites any existing model with the same alias.
 
-        Returns:                None
+        Returns: None
         """
-
-        # create run_dir if it does not exit
-        self.run_dir.mkdir(parents=True, exist_ok=True)
 
         with self._distributor_scope:
             config = {} if config is None else config
@@ -380,16 +382,30 @@ class Trainer:
             model._name = alias
             self._models.update({alias: model})
 
-    def _compile_protocol(self, protocol: Protocol):
+    def _compile_protocol(self, protocol: Protocol) -> bool:
+        """
+        This method compiles the protocol. The protocol is compiled only once, and the compilation is triggered by the spin request.
+        The protocol compilation perform following tasks:
+            1- Create loss functions, metrics and optimizers, grouped in organization units called `objectives`.
+            2- Instantiate the `objective(s)` that the protocol must optimize through training.
+            3- Links the instantiated models from the trainer to the protocol.
+            4- Caches the the distribution strategy for the protocol.
+            5- If eager execution is `False`, compiles the train/validate/predict steps into a tensorflow graph.
+
+        Args:
+            protocol: The protocol to be compiled
+
+        Returns: True if the compilation is successful, otherwise raises an exception.
+        """
+        return_status = False
         with self._distributor_scope:
             if not isinstance(protocol, Protocol):
                 raise TypeError(
-                    f"""The strategy must be a subclass of {type(Protocol)}
-                                Expected: {Protocol}
-                                Received: {protocol}"""
+                    f"The protocol must be a subclass of {Protocol.__name__}"
+                    f"Expected: {Protocol.__name__}"
+                    f"Received: {type(protocol).__name__}"
                 )
-            models_dict = self._models
-            if not models_dict:
+            if not self._models:
                 raise RuntimeError(
                     f"The trainer has no computational graph, unable to compile the strategy.\n"
                     f"You can add one or more models to the trainer via add_model method:\n"
@@ -401,19 +417,22 @@ class Trainer:
             except Exception as e:
                 logger.error(str(e))
                 logger.error("The strategy compilation failed!")
-                raise e
-        return True
+
+            else:
+                return_status = True
+
+        return return_status
 
     def configure_callbacks(
         self, callback_list: List[Callback], verbose: VerbosityLevel
     ):
         """
-        Drop specific default callbacks if relevant callback is found in user callbacks.
-        Otherwise, return a default callback list.
+        This method configures the callbacks for the training process, it also adds default callbacks to the user supplied list.
+        Drops specific [default] callbacks if relevant callback is found in the user callbacks list.
         Args:
             callback_list:      A list of user supplied callbacks
             verbose:            The verbosity of the progress reporting callback
-        Returns:
+        Returns: None
         """
         if callback_list:
             logger.warning(
@@ -445,7 +464,7 @@ class Trainer:
     def _load_checkpoint(self, checkpoint, silent=True):
         latest_ckpt = tf.train.latest_checkpoint(self.checkpoint_dir)
         status = checkpoint.restore(latest_ckpt)
-        print(f"Restored from: \n{latest_ckpt} \n") if not silent else None
+        logger.info(f"Restored from: \n{latest_ckpt} \n") if not silent else None
         return status
 
     def spin(
@@ -457,23 +476,27 @@ class Trainer:
         run_eagerly: bool = False,
         verbose: VerbosityLevel = VerbosityLevel.UPDATE_AT_BATCH,
         **kwargs,
-    ):
+    ) -> None:
         """
         When spin method is invoked: it compiles the protocol executes the training/evaluation tasks
         as per the given protocol.
 
         Args:
-            protocol:
-            max_epochs:
-            callback_list:
-            warm_start:
-            run_eagerly:
-            serving_signature:
-            verbose:
-            **kwargs:
+            protocol:           This is the protocol that defines the training/evaluation loops and the logic.
+                                The protocol must be a subclass of `Protocol` class and must be configured with
+                                to contain one or more `Objective` instances.
+            max_epochs:         The maximum number of epochs to train the model.
+            callback_list:      A list of user supplied callbacks.
+            warm_start:         Whether to load the latest checkpoint from the checkpoint directory.
+            run_eagerly:        Whether to run the training/evaluation loops eagerly or not.
+            serving_signature:  The signature of the serving function.
+            verbose:            The verbosity level of the trainer progress, it can be one of the following:
+                                    VerbosityLevel.SILENT, VerbosityLevel.UPDATE_AT_BATCH, VerbosityLevel.UPDATE_AT_EPOCH
+                                    Default: VerbosityLevel.UPDATE_AT_BATCH
+            **kwargs:           Additional keyword arguments.
 
-        Returns:
-
+        Returns: None
+         
         """
 
         with self._distributor_scope:
@@ -508,7 +531,7 @@ class Trainer:
         )
 
         self.write_config_to_disk()
-        print(json.dumps(self.to_json(), indent=4)) if verbose not in [
+        logger.info(json.dumps(self.to_json(), indent=4)) if verbose not in [
             VerbosityLevel.KEEP_SILENT
         ] else None
 
@@ -544,7 +567,7 @@ class Trainer:
         if not kwargs.pop("skip_initial_evaluation", False):
             self._progress_bar.mode = ModeProgressBar.EVAL_ONLY
             split_name = eval_stream.split_name
-            print(f"Evaluation on the `{split_name}` split:") if verbose not in [
+            logger.info(f"Evaluation on the `{split_name}` split:") if verbose not in [
                 VerbosityLevel.KEEP_SILENT
             ] else None
 
@@ -571,7 +594,7 @@ class Trainer:
 
         # Train end evaluation epochs
         if self._epoch.value() >= max_epochs:
-            print(
+            logger.info(
                 f"Exiting ...\n"
                 f"The maximum epochs have already been reached.\n"
                 f"Restored epoch == {int(self._epoch.value())}\n"
@@ -688,7 +711,7 @@ class Trainer:
         )
         if not silent:
             print(f"\n{'':-^{self._progress_bar.terminal_size}}")
-            print(f"\nCompute Complexity [Prediction]:\n")
+            logger.info(f"\nCompute Complexity [Prediction]:\n")
             print(self.predict_complexity)
             print(f"{'':-^{self._progress_bar.terminal_size}}\n")
 
@@ -699,4 +722,4 @@ class Trainer:
 
 if __name__ == "__main__":
     trainer = Trainer(DataStream("cifar10"), name="cifar10Classifier")
-    print(str(trainer))
+    logger.info(str(trainer))

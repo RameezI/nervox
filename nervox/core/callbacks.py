@@ -262,7 +262,6 @@ class CSVLogger(Callback):
 
 class ProgressParaphraser(Callback):
     """Callback that prints (formatted) progress and metrics to stdout."""
-
     def __init__(
         self,
         progress_bar: ProgressBar,

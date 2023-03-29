@@ -24,19 +24,19 @@ class Classification(Protocol):
         """
         self.supervision_keys = supervision_keys
 
-    @staticmethod
-    def objective_configurator():
-        """
-        Configure method provides a placeholder for defining/configuring the objective(s) for the strategy.
-        The configure method can be overridden through the `configurator` argument of the constructor.
-        The configurator is user supplied function/functor that returns objective(s) for the training.
-        For more permissive customization, user must write a new protocol or derive from an existing one.
-        """
-        optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
-        xentropy = CrossEntropy(transform=tf.nn.sigmoid)
-        accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
-        objective = Objective(xentropy, optimizer=optimizer, metrics=[accuracy])
-        return objective
+    # @staticmethod
+    # def objective_configurator():
+    #     """
+    #     Configure method provides a placeholder for defining/configuring the objective(s) for the strategy.
+    #     The configure method can be overridden through the `configurator` argument of the constructor.
+    #     The configurator is user supplied function/functor that returns objective(s) for the training.
+    #     For more permissive customization, user must write a new protocol or derive from an existing one.
+    #     """
+    #     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+    #     xentropy = CrossEntropy(transform=tf.nn.sigmoid)
+    #     accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
+    #     objective = Objective(xentropy, optimizer=optimizer, metrics=[accuracy])
+    #     return objective
 
     def train_step(self, batch: Dict[str, tf.Tensor]) -> None:
         """

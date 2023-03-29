@@ -229,15 +229,14 @@ class Protocol(tf.Module):
     ):
         """
         The protocol compilation perform following tasks:
-            1- Create loss functions, metrics and optimizers
-               grouped together in organization units `objectives`.
-            2- Instantiate the objective that the protocol will be optimizing.
-            3- Links the instantiated models from the trainer with the protocol.
-            4- Compiles the train/validate/predict steps into a tensorflow graph.
-            5- Caches the the distribution strategy from the outer-scope
-
+            1- Create loss functions, metrics and optimizers, grouped in organization units called `objectives`.
+            2- Instantiate the `objective(s)` that the protocol must optimize through training.
+            3- Links the instantiated models from the trainer to the protocol.
+            4- Caches the the distribution strategy for the protocol.
+            5- If eager execution is `False`, compiles the train/validate/predict steps into a tensorflow graph.
+        
         Args:
-            models:  A dictionary of instantiated models that are linked to the protocol.
+            models:  A dictionary of instantiated models to be linked to the protocol.
         """
         self._distributor = tf.distribute.get_strategy()
         required_args = self._compile_compliance_check(models)
@@ -307,6 +306,16 @@ class Protocol(tf.Module):
         postfix="train",
         **kwargs,
     ) -> Dict[str, any]:
+        """The is the training loop for the protocol. It is responsible for training the underlying models.
+        Args:
+            dataset (DataStream): A stream of data batches.
+            callbacks (CallbackList, optional): A list of callbacks to be . Defaults to CallbackList() an empty callback list.
+            run_eagerly (bool, optional): Whether to run the training loop eagerly(True) or in graph-mode (False). Defaults to False.
+            postfix (str, optional): Adds a suffix to each metric to identify them connected to training data. Defaults to "train".
+        Returns:
+            Dict[str, any]: A dictionary of metrics and progress variables at the end of the training.
+        """
+
         examples_processed = 0
         self.reset_metrics()
 
@@ -335,6 +344,17 @@ class Protocol(tf.Module):
         postfix="val",
         **kwargs,
     ) -> Dict[str, any]:
+        """This is the evaluation loop for the protocol. It is responsible for evaluating the underlying models.
+        Args:
+            dataset (DataStream): A stream of data batches.
+            callbacks (CallbackList, optional): A list of callbacks to be . Defaults to CallbackList() an empty callback list.
+            run_eagerly (bool, optional): Whether to run the training loop eagerly(True) or in graph-mode (False). Defaults to False.
+            postfix (str, optional): Adds a suffix to each metric to identify them connected to validation/evaluation datastream. Defaults to "val".
+
+        Returns:
+            Dict[str, any]: A dictionary of metrics and progress variables at the end of the evaluation.
+        """
+
         examples_processed = 0
         self.reset_metrics()
 
@@ -360,8 +380,14 @@ class Protocol(tf.Module):
     def export(
         self, destination: Path, signature: Collection[tf.TensorSpec] = ()
     ) -> None:
-        """Export this protocol as as a saved model"""
+        """Exports the protocol to a saved model.
+        Args:
+            destination (Path): The destination path for the saved model.
+            signature (Collection[tf.TensorSpec], optional): The serving signatures for the model. Defaults to ().
 
+        Raises:
+            NotImplemented: If the protocol is not compiled.
+        """   
         if self._is_compiled and signature:
             self.predict_step_tf = tf.function(
                 self.predict_step, input_signature=signature
@@ -371,7 +397,7 @@ class Protocol(tf.Module):
         elif self._is_compiled:
             logging.warning(
                 "\n\nA serving signature is not prescribed and hence will not be exported!"
-                "\ncontinuing export without a `default_serving_signature`, the model cannot be used for inferrence ... "
+                "\ncontinuing export without a `default_serving_signature`, which will be required for serving the model through serving API."
             )
             tf.saved_model.save(self, destination)
 
