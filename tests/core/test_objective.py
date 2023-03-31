@@ -42,7 +42,7 @@ class DummyProtocol(Protocol):
         return Objective(loss, optimizer)
     
     def train_step(self, batch):
-        model = self.model
+        model = self.module
         images, labels = batch['image'], batch['label']
         
         predictions = model(images)

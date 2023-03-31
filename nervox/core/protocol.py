@@ -36,7 +36,7 @@ class Protocol(tf.Module):
         name = snake_to_camel(self.__module__, splitter=".")
         super(Protocol, self).__init__(name=name)
         self._cluster_coordinator: Union[None, Protocol.ClusterCoordinator] = None
-        self._models: Union[None, Dict[str, tf.keras.Mode]] = None
+        self._modules: Union[None, Dict[str, tf.keras.Mode]] = None
         self._objectives: Union[None, Dict[str, Objective]] = None
         self._metrics: List[tf.keras.metrics.Metric] = []
         self._distributor = None
@@ -102,32 +102,32 @@ class Protocol(tf.Module):
         return self._objectives
 
     @property
-    def model(self):
-        model: Union[None, tf.keras.Model] = None
-        if isinstance(self._models, dict) and len(self._models) > 1:
+    def module(self):
+        module: Union[None, tf.keras.Model] = None
+        if isinstance(self._modules, dict) and len(self._modules) > 1:
             raise AttributeError(
-                f"Invalid use of attribute model. This property is only populated in case of a"
-                f"single model setting. While, multiple models setting is spotted.\n"
-                f" Please make use of `models` instead \n"
-                f"Spotted models keys:{list(self._models.keys())}"
+                f"Invalid use of attribute module. This property is only populated in case of a"
+                f"single module setting. While, multiple modules setting is spotted.\n"
+                f" Please make use of `modules` instead \n"
+                f"Spotted modules keys:{list(self._modules.keys())}"
             )
 
-        elif isinstance(self._models, dict) and len(self._models) == 1:
-            model = [value for value in self._models.values()][0]
-        return model
+        elif isinstance(self._modules, dict) and len(self._modules) == 1:
+            module = [value for value in self._modules.values()][0]
+        return module
 
     @property
-    def models(self):
-        return self._models
+    def modules(self):
+        return self._modules
 
     def reset_metrics(self):
         if self._metrics:
             [metric.reset() for metric in self._metrics]
 
-    def _set_models(self, value: Union[Dict[str, tf.keras.Model], tf.keras.Model]):
-        models = value if isinstance(value, dict) else {"model": value}
-        self._assert_type_conformity(models, expected_type=tf.keras.Model)
-        self._models = models
+    def _set_modules(self, value: Union[Dict[str, tf.keras.Model], tf.keras.Model]):
+        modules = value if isinstance(value, dict) else {"module": value}
+        self._assert_type_conformity(modules, expected_type=tf.keras.Model)
+        self._modules = modules
 
     def _set_objectives(self, value: Union[Dict[str, Objective], Objective]):
         objectives = value if isinstance(value, dict) else {"objective": value}
@@ -155,7 +155,7 @@ class Protocol(tf.Module):
                 f"Received: {faulty_formulations}"
             )
 
-    def _compile_compliance_check(self, models):
+    def _compile_compliance_check(self, modules):
         params = inspect.signature(self.objective_configurator).parameters.values()
         unsupported_kinds = [
             inspect.Parameter.POSITIONAL_ONLY,
@@ -177,23 +177,23 @@ class Protocol(tf.Module):
             param.name for param in params if param.default == inspect.Parameter.empty
         ]
 
-        strategy_module: List[str] = str(self.__module__)
+        protocol_module: List[str] = str(self.__module__)
         if (
-            isinstance(models, dict)
-            and all([isinstance(model, tf.keras.Model) for model in models.values()])
-            and all([isinstance(key, str) for key in models.keys()])
+            isinstance(modules, dict)
+            and all([isinstance(module, tf.keras.Model) for module in modules.values()])
+            and all([isinstance(key, str) for key in modules.keys()])
         ):
-            if not all([arg in models.keys() for arg in required_named_args]):
+            if not all([arg in modules.keys() for arg in required_named_args]):
                 raise RuntimeError(
-                    f"Unable to populate models!\n"
-                    f"The model dictionary handed over to the compile function does not comply with"
-                    f" the `configure` signature of the `{strategy_module}` module.\n"
-                    f"The method must accept (as arguments) the same names as the keys in the model"
+                    f"Unable to populate modules!\n"
+                    f"The modules dictionary handed over to the compile function does not comply with"
+                    f" the `objective_configurator` signature of the `{protocol_module}` module.\n"
+                    f"The method must accept (as arguments) the same names as the keys in the module"
                     f" dictionary of the trainer instance.\n"
                     f"A subset of these alias also constitutes a valid argument list!\n"
                     f"The discrepancy:\n"
                     f"`configure` signature: {inspect.signature(self.objective_configurator)}\n"
-                    f"model keys: {list(models.keys())}"
+                    f"module keys: {list(modules.keys())}"
                 )
         else:
             raise ValueError(
@@ -221,32 +221,32 @@ class Protocol(tf.Module):
             for key in self._mo:
                 self._objectives[key]._losses._allow_sum_over_batch_size = True
         else:
-            self.model.loss._allow_sum_over_batch_size = True
+            self.module.loss._allow_sum_over_batch_size = True
 
     def compile(
         self,
-        models: Dict[str, tf.keras.Model],
+        modules: Dict[str, tf.keras.Model],
     ):
         """
         The protocol compilation perform following tasks:
             1- Create loss functions, metrics and optimizers, grouped in organization units called `objectives`.
             2- Instantiate the `objective(s)` that the protocol must optimize through training.
-            3- Links the instantiated models from the trainer to the protocol.
+            3- Links the instantiated modules from the trainer to the protocol.
             4- Caches the the distribution strategy for the protocol.
             5- If eager execution is `False`, compiles the train/validate/predict steps into a tensorflow graph.
-        
+
         Args:
-            models:  A dictionary of instantiated models to be linked to the protocol.
+            modules:  A dictionary of instantiated modules to be linked to the protocol.
         """
         self._distributor = tf.distribute.get_strategy()
-        required_args = self._compile_compliance_check(models)
-        required_models = {
-            key: model for key, model in models.items() if key in required_args
+        required_args = self._compile_compliance_check(modules)
+        required_modules = {
+            key: module for key, module in modules.items() if key in required_args
         }
 
-        self._set_models(models)  # Link models from the outer scope with the protocol.
+        self._set_modules(modules)  # Link modules from the outer scope with the protocol.
         self._set_objectives(
-            self.objective_configurator(**required_models)
+            self.objective_configurator(**required_modules)
         )  # set objective/objectives.
 
         # compiled_step functions for train and evaluate
@@ -260,11 +260,11 @@ class Protocol(tf.Module):
         **kwargs: tf.keras.Model,
     ) -> Union[Dict[str, Objective], Objective]:
         """
-        Constructs a learning objective for the trainer. The method optionally accepts models, using their aliases as
-         keyword/named arguments. Any model that need modification/inspection can be listed as named argument in the
+        Constructs a learning objective for the trainer. The method optionally accepts modules, using their aliases as
+         keyword/named arguments. Any module that need modification/inspection can be listed as named argument in the
         `configure` method, using its alias registered with the trainer.
         Args:
-            **kwargs: Accepts (zero or more) models provided as keyword arguments using their aliases.
+            **kwargs: Accepts (zero or more) modules provided as keyword arguments using their aliases.
         Returns:
             A nervox.core.Objective or a named collection of such objectives.
         """
@@ -279,7 +279,7 @@ class Protocol(tf.Module):
             """Lacking `train_step` definition!
             The training strategy does not provide a `train_step` method. A strategy without this method is unable
             be perform training/learning. Please provide a `train_step` method for your strategy, which describes
-            a single step for training the underlying models."""
+            a single step for training the underlying modules."""
         )
 
     def evaluate_step(self, input):
@@ -287,7 +287,7 @@ class Protocol(tf.Module):
             """Lacking `evaluate_step` definition!
             The strategy does not provide an `evaluate_step` method. A strategy without this method is unable to
             determine the evaluation logic. Please provide an `evaluate_step` for your strategy, which describes
-            a single step for evaluating the underlying model/s on a single batch."""
+            a single step for evaluating the underlying module(s) on a single batch."""
         )
 
     def predict_step(self, input):
@@ -295,7 +295,7 @@ class Protocol(tf.Module):
             """Lacking `predict_step` definition!
             The strategy does not provide a `predict_step` method. A strategy without this method is unable
             to determine the prediction logic. Please provide a `predict_step` method for your strategy,
-            which describes a single step for predicting based on the the underlying trained model/s."""
+            which describes a single step for predicting based on the the underlying trained module(s)."""
         )
 
     def train(
@@ -306,7 +306,7 @@ class Protocol(tf.Module):
         postfix="train",
         **kwargs,
     ) -> Dict[str, any]:
-        """The is the training loop for the protocol. It is responsible for training the underlying models.
+        """The is the training loop for the protocol. It is responsible for training the underlying module(s).
         Args:
             dataset (DataStream): A stream of data batches.
             callbacks (CallbackList, optional): A list of callbacks to be . Defaults to CallbackList() an empty callback list.
@@ -344,7 +344,7 @@ class Protocol(tf.Module):
         postfix="val",
         **kwargs,
     ) -> Dict[str, any]:
-        """This is the evaluation loop for the protocol. It is responsible for evaluating the underlying models.
+        """This is the evaluation loop for the protocol. It is responsible for evaluating the underlying modules.
         Args:
             dataset (DataStream): A stream of data batches.
             callbacks (CallbackList, optional): A list of callbacks to be . Defaults to CallbackList() an empty callback list.
@@ -376,37 +376,6 @@ class Protocol(tf.Module):
             )
             callbacks.on_test_batch_end(step, logs)
         return logs
-
-    def export(
-        self, destination: Path, signature: Collection[tf.TensorSpec] = ()
-    ) -> None:
-        """Exports the protocol to a saved model.
-        Args:
-            destination (Path): The destination path for the saved model.
-            signature (Collection[tf.TensorSpec], optional): The serving signatures for the model. Defaults to ().
-
-        Raises:
-            NotImplemented: If the protocol is not compiled.
-        """   
-        if self._is_compiled and signature:
-            self.predict_step_tf = tf.function(
-                self.predict_step, input_signature=signature
-            )
-            tf.saved_model.save(self, destination, signatures=self.predict_step_tf)
-
-        elif self._is_compiled:
-            logging.warning(
-                "\n\nA serving signature is not prescribed and hence will not be exported!"
-                "\ncontinuing export without a `default_serving_signature`, which will be required for serving the model through serving API."
-            )
-            tf.saved_model.save(self, destination)
-
-        else:
-            logging.warning(
-                "\n\nCannot export a protocol that is not yet compiled!"
-                "continuing without export ... "
-            )
-            raise NotImplemented
-
+    
     def __str__(self):
         return self.name

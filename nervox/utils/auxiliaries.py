@@ -20,7 +20,7 @@ from functools import wraps
 from dataclasses import dataclass
 from pathlib import Path
 import matplotlib.pyplot as plt
-from typing import Union, Tuple, Callable, Sequence
+from typing import Union, Tuple, Callable
 from enum import Enum
 
 
@@ -28,6 +28,16 @@ class VerbosityLevel(Enum):
     KEEP_SILENT = 'silent'
     UPDATE_AT_EPOCH = 'epoch',
     UPDATE_AT_BATCH = 'batch'
+
+
+import tensorflow as tf
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Signatures(tf.Module):
+    train: tf.TensorSpec = None
+    predict: tf.TensorSpec = None
+    evaluate: tf.TensorSpec = None
 
 
 @dataclass(frozen=True)

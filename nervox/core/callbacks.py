@@ -356,7 +356,7 @@ class Exporter(Callback):
     def _load_checkpoint(self):
         checkpoint = tf.train.Checkpoint(
             epoch=self._epoch,
-            **self.protocol.models,
+            **self.protocol.modules,
             objectives=self._protocol.objectives,
         )
         latest_ckpt = tf.train.latest_checkpoint(self.checkpoint_dir)
@@ -386,5 +386,5 @@ class Exporter(Callback):
                 f"checkpoint directory: {self.checkpoint_dir}"
             )
         else:
-            signature = getattr(self, 'signature', ())
+            signature = getattr(self, 'signatures', ())
             self.protocol.export(export_dir, signature)

@@ -214,7 +214,7 @@ class Trainer:
     def _configure_export(user_config: Union[None, dict] = None):
         user_config = {} if user_config is None else user_config
         export_config = {
-            "signature": (),
+            "signatures": (),
         }
         export_config.update(user_config)
         return export_config

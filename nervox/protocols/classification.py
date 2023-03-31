@@ -47,8 +47,8 @@ class Classification(Protocol):
         data, labels = batch[self.supervision_keys[0]], batch[self.supervision_keys[1]]
 
         # aliases
-        encoder = self.models["encoder"]
-        decoder = self.models["decoder"]
+        encoder = self.modules["encoder"]
+        decoder = self.modules["decoder"]
         objective = self.objective
         optimizer = self.objective.optimizer
 
@@ -68,8 +68,8 @@ class Classification(Protocol):
         data, labels = batch[self.supervision_keys[0]], batch[self.supervision_keys[1]]
 
         # aliases
-        encoder = self.models["encoder"]
-        classifier = self.models["decoder"]
+        encoder = self.modules["encoder"]
+        classifier = self.modules["decoder"]
         objective = self.objective
 
         encoding = encoder(data, training=False)
@@ -83,6 +83,6 @@ class Classification(Protocol):
     # The default serving signature
     def predict_step(self, batch: Union[tf.Tensor, Dict[str, tf.Tensor]]):
         data = batch[self.supervision_keys[0]] if isinstance(batch, Dict) else batch
-        encoding = self.models["encoder"](data, training=False)
-        predictions = self.models["decoder"](encoding, training=False)
+        encoding = self.modules["encoder"](data, training=False)
+        predictions = self.modules["decoder"](encoding, training=False)
         return predictions
