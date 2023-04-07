@@ -55,8 +55,8 @@ class ComputeComplexity:
     def __repr__(self):
         return f"{'Total FLOPs':<20}: {self.flops:>20n}\n" \
                f"{'Total Parameters':<20}: {self.parameters:>20n}\n" \
-               f"{'  Trainable':<20}: {self.trainable_parameters:>20n}\n" \
-               f"{'  Non-Trainable':<20}: {self.non_trainable_parameters:>20n}"
+               f"{'-> Trainable':<20}: {self.trainable_parameters:>20n}\n" \
+               f"{'-> Non-Trainable':<20}: {self.non_trainable_parameters:>20n}"
 
 #fmt:off
 def base_parser(training_component=True, data_component=True) -> argparse.ArgumentParser:

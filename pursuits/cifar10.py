@@ -142,6 +142,8 @@ def exort(
         output_path:        The path to the directory where the exported resources are stored.
     """
 
+    import tensorflow as tf
+
     # Signatures
     export_signatures = Signatures(
         train={
