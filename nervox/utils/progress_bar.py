@@ -216,6 +216,8 @@ class ProgressBar:
         self.eval_statement = {'samples_done': 0}
         self.ckpt_statement = {'is_ckpt': False}
     
+
+
     @property
     def terminal_size(self):
         try:
@@ -224,6 +226,7 @@ class ProgressBar:
             terminal_size = 256
         return terminal_size
     
+
     def __repr__(self):
         if self.mode == ModeProgressBar.DEFAULT:
             statements = [re.sub(self._nan_pattern, '?? ', str(self.train_statement))]

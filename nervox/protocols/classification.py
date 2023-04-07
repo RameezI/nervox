@@ -16,12 +16,13 @@ from nervox.transforms import onehot_transform
 
 
 class Classification(Protocol):
-    def __init__(self, supervision_keys: Tuple[str, str]):
+    def __init__(self, supervision_keys: Tuple[str, str], **kwargs):
         """
         Args:
             supervision_keys:   An ordered pair of strings; where the first element represents the key for the
                                 input data while the second element represents the key for the label.
         """
+        super().__init__(**kwargs)
         self.supervision_keys = supervision_keys
 
     # @staticmethod
@@ -63,8 +64,9 @@ class Classification(Protocol):
         gradients = tape.gradient(loss, parameters)
         optimizer.apply_gradients(zip(gradients, parameters))
         objective.update_metrics(labels, predictions)
+        return {metric.name: metric.result() for metric in self.metrics}
 
-    def evaluate_step(self, batch: Dict[str, tf.Tensor]):
+    def evaluate_step(self, batch: Dict[str, tf.Tensor])-> None:
         data, labels = batch[self.supervision_keys[0]], batch[self.supervision_keys[1]]
 
         # aliases
@@ -79,6 +81,7 @@ class Classification(Protocol):
         # calculate loss and update loss metrics
         objective.compute_loss(labels, predictions) + regularization_loss
         objective.update_metrics(labels, predictions)
+        return {metric.name: metric.result() for metric in self.metrics}
 
     # The default serving signature
     def predict_step(self, batch: Union[tf.Tensor, Dict[str, tf.Tensor]]):

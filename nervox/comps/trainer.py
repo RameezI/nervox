@@ -13,8 +13,19 @@ import locale
 import uuid
 import logging
 import numpy as np
-import tensorflow as tf
 
+
+# Set environment variable to silence tensorflow warnings/errors/info/debug.
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = os.getenv("TF_CPP_MIN_LOG_LEVEL", "3")
+""""
+This doen't work if tensorflow is imported before setting the env variable.
+0 = all messages are logged (default behavior)
+1 = INFO messages are not printed
+2 = INFO and WARNING messages are not printed
+3 = INFO, WARNING, and ERROR messages are not printed
+"""
+
+import tensorflow as tf
 from pathlib import Path
 from nervox.core.callbacks import Callback
 from typing import Union, List, Tuple, Dict, Iterable, Type, Any
@@ -29,7 +40,7 @@ from nervox.core import Protocol
 
 from nervox.utils import ProgressBar, ModeProgressBar
 
-from nervox.core.callbacks import CheckPointer, ProgressParaphraser, Exporter
+from nervox.core.callbacks import CheckPointer, ProgressParaphraser  # , Exporter
 
 from nervox.utils import (
     get_urid,
@@ -39,15 +50,19 @@ from nervox.utils import (
 )
 
 # global settings
-tf.get_logger().setLevel("ERROR")
-tf.autograph.set_verbosity(1)  # put 10 for high verbosity
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
+tf_logger = tf.get_logger()
+tf_logger.setLevel(logging.ERROR)
+tf.autograph.set_verbosity(10)  # put 10 for high verbosity
 
+
+# nervox logger
+logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+
 # Aliases
 CallbackList = tf.keras.callbacks.CallbackList
-
 
 class Trainer:
     # TensorFlow Distribution Schemes Validated by the nervox trainer
@@ -66,7 +81,7 @@ class Trainer:
         run_id: Union[None, str] = None,
         distributor: Union[None, tf.distribute.Strategy] = None,
         ckpt_opts: Union[None, Dict[str, Any]] = None,
-        export_opts: Union[None, Dict[str, Any]] = None,
+        # export_opts: Union[None, Dict[str, Any]] = None,
     ):
         """
         Args:
@@ -111,11 +126,11 @@ class Trainer:
             raise
 
         self._checkpointer_config: Union[Dict[str, Any], None] = None
-        self._export_config: Union[Dict[str, Any], None] = None
+        # self._export_config: Union[Dict[str, Any], None] = None
         self.predict_complexity: Union[None, ComputeComplexity] = None
 
         self.checkpointer_config = ckpt_opts
-        self.export_config = export_opts
+        # self.export_config = export_opts
 
         # Tensorboard Summaries
         self._train_summarizer: Union[None, tf.summary.SummaryWriter] = None
@@ -210,14 +225,14 @@ class Trainer:
         return ckpt_config
 
     # Configure the underlying Checkpointer Callback
-    @staticmethod
-    def _configure_export(user_config: Union[None, dict] = None):
-        user_config = {} if user_config is None else user_config
-        export_config = {
-            "signatures": (),
-        }
-        export_config.update(user_config)
-        return export_config
+    # @staticmethod
+    # def _configure_export(user_config: Union[None, dict] = None):
+    #     user_config = {} if user_config is None else user_config
+    #     export_config = {
+    #         "signatures": (),
+    #     }
+    #     export_config.update(user_config)
+    #     return export_config
 
     @property
     def checkpointer_config(self) -> Dict:
@@ -229,15 +244,15 @@ class Trainer:
     def checkpointer_config(self, value: Union[Dict, None]):
         self._checkpointer_config = self._configure_ckpt(value)
 
-    @property
-    def export_config(self) -> Dict:
-        if self._export_config is None:
-            self._export_config: Dict[str, Any] = self._configure_export(None)
-        return self._export_config
+    # @property
+    # def export_config(self) -> Dict:
+    #     if self._export_config is None:
+    #         self._export_config: Dict[str, Any] = self._configure_export(None)
+    #     return self._export_config
 
-    @export_config.setter
-    def export_config(self, value: Union[Dict, None]):
-        self._export_config = self._configure_export(value)
+    # @export_config.setter
+    # def export_config(self, value: Union[Dict, None]):
+    #     self._export_config = self._configure_export(value)
 
     # Connect Data Streams with the trainer
     def _connect_streams(
@@ -450,7 +465,7 @@ class Trainer:
         )
         # callback_list.append(TensorBoardLogger(self.tensorboard_dir, mode='batch',
         #                                                  produce_graph=True))
-        callback_list.append(Exporter(self.checkpoint_dir, **self._export_config))
+        # callback_list.append(Exporter(self.checkpoint_dir, **self._export_config))
         callback_list.append(ProgressParaphraser(self._progress_bar, verbose=verbose))
 
         for cb in callback_list:
@@ -478,7 +493,7 @@ class Trainer:
         **kwargs,
     ) -> None:
         """
-        When spin method is invoked: it compiles the protocol executes the training/evaluation tasks
+        When spin method is invoked: it compiles the protocol and executes the training/evaluation tasks
         as per the given protocol.
 
         Args:
@@ -496,7 +511,7 @@ class Trainer:
             **kwargs:           Additional keyword arguments.
 
         Returns: None
-         
+
         """
 
         with self._distributor_scope:
@@ -531,7 +546,13 @@ class Trainer:
         )
 
         self.write_config_to_disk()
-        logger.info(json.dumps(self.to_json(), indent=4)) if verbose not in [
+
+        # Printing the coinfiguration
+        print(f"\n{'':-<{self._progress_bar.terminal_size}}") if verbose not in [
+            VerbosityLevel.KEEP_SILENT
+        ] else None
+        print(f"\n{self.name}/{self.run_id}:") 
+        print(json.dumps(self.to_json(), indent=4)) if verbose not in [
             VerbosityLevel.KEEP_SILENT
         ] else None
 
@@ -567,7 +588,7 @@ class Trainer:
         if not kwargs.pop("skip_initial_evaluation", False):
             self._progress_bar.mode = ModeProgressBar.EVAL_ONLY
             split_name = eval_stream.split_name
-            logger.info(f"Evaluation on the `{split_name}` split:") if verbose not in [
+            print(f"Evaluation on the `{split_name}` split:") if verbose not in [
                 VerbosityLevel.KEEP_SILENT
             ] else None
 
@@ -594,7 +615,7 @@ class Trainer:
 
         # Train end evaluation epochs
         if self._epoch.value() >= max_epochs:
-            logger.info(
+            print(
                 f"Exiting ...\n"
                 f"The maximum epochs have already been reached.\n"
                 f"Restored epoch == {int(self._epoch.value())}\n"
@@ -711,9 +732,9 @@ class Trainer:
         )
         if not silent:
             print(f"\n{'':-^{self._progress_bar.terminal_size}}")
-            logger.info(f"\nCompute Complexity [Prediction]:\n")
+            print(f"Compute Complexity [Prediction]:\n")
             print(self.predict_complexity)
-            print(f"{'':-^{self._progress_bar.terminal_size}}\n")
+            print(f"{'':-^{self._progress_bar.terminal_size}}")
 
     def __str__(self):
         name = "unnamed" if self._name is None else self._name

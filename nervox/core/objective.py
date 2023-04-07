@@ -4,6 +4,7 @@ Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
 import tensorflow as tf
+import logging
 from typing import Union, Callable, Dict, Collection
 
 from nervox.utils.distribution \
@@ -12,6 +13,9 @@ from nervox.utils.distribution \
 from nervox.metrics import \
     Metric, Mean
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class Objective(tf.Module):
     """This class defines a container for the training objective and associated metrics to measure its progress. The
@@ -91,14 +95,8 @@ class Objective(tf.Module):
         """
     
     def update_metrics(self, *args, exclude: Collection[str] = ('loss',), **kwargs) -> None:
-        metrics = filter(lambda x: True if x.name not in exclude else False, self.metrics)
-        for metric in metrics:
+        metrics_to_update = filter(lambda x: True if x.name not in exclude else False, self.metrics)
+        #logger.debug(f'Updating metrics: {[metric.name for metric in metrics_to_update]}')
+        for metric in metrics_to_update:
             metric.update(*args, **kwargs)
         # map(lambda x: x.update(*args, **kwargs), metrics)
-    
-
-
-# class ObjectiveConfigurer(ABC):
-#     @abstracmethod
-#     def __call__(self) -> Union[Objective, Collection[Objective]]:
-#         pass

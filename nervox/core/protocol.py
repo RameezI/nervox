@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import Collection
 import tensorflow as tf
 from tensorflow import distribute
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, final
 from nervox.core.objective import Objective
 from nervox.data import DataStream
-from nervox.utils import snake_to_camel
+from nervox.utils import snake_to_camel, Signatures
 
 # Aliases
 CallbackList = tf.keras.callbacks.CallbackList
@@ -22,15 +22,15 @@ CallbackList = tf.keras.callbacks.CallbackList
 class Protocol(tf.Module):
     ClusterCoordinator = distribute.experimental.coordinator.ClusterCoordinator
 
-    def __init_subclass__(cls):
-        super().__init_subclass__()
-        _subclass_init = cls.__init__
+    # def __init_subclass__(cls):
+    #     super().__init_subclass__()
+    #     _subclass_init = cls.__init__
 
-        def init_protocol_subclass(self, configurator=None, **kwargs):
-            super(cls, self).__init__(configurator=configurator)
-            _subclass_init(self, **kwargs)
+    #     def init_protocol_subclass(self, configurator=None, **kwargs):
+    #         super(cls, self).__init__(configurator=configurator)
+    #         _subclass_init(self, **kwargs)
 
-        cls.__init__ = init_protocol_subclass
+    #     cls.__init__ = init_protocol_subclass
 
     def __init__(self, configurator=None):
         name = snake_to_camel(self.__module__, splitter=".")
@@ -119,7 +119,7 @@ class Protocol(tf.Module):
     @property
     def modules(self):
         return self._modules
-
+    
     def reset_metrics(self):
         if self._metrics:
             [metric.reset() for metric in self._metrics]
@@ -252,7 +252,7 @@ class Protocol(tf.Module):
         # compiled_step functions for train and evaluate
         self.train_step_tf = tf.function(self.train_step)
         self.evaluate_step_tf = tf.function(self.evaluate_step)
-        # self.predict_step_tf = tf.function(self.predict_step)
+        self.predict_step_tf = tf.function(self.predict_step)
         self._is_compiled = True
 
     @staticmethod
@@ -298,6 +298,7 @@ class Protocol(tf.Module):
             which describes a single step for predicting based on the the underlying trained module(s)."""
         )
 
+    @final
     def train(
         self,
         dataset: DataStream,
@@ -336,6 +337,7 @@ class Protocol(tf.Module):
             callbacks.on_train_batch_end(step, logs)
         return logs
 
+    @final
     def evaluate(
         self,
         dataset: DataStream,

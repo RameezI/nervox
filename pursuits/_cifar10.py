@@ -5,7 +5,6 @@ Email: rameez.ismaeel@gmail.com
 """
 
 import argparse
-import tensorflow as tf
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 from nervox import Trainer
@@ -23,6 +22,7 @@ from nervox.core import Objective
 from nervox.utils import Signatures
 
 def objective_configurer() -> Objective:
+    import tensorflow as tf
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     xentropy = CrossEntropy(transform=tf.nn.sigmoid)
     accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
@@ -53,22 +53,10 @@ def train(args: argparse.Namespace):
         transforms=[Normalize(mean=0.0, std=1.0), OneHotLabels(num_labels=10)],
     )
 
-    export_signatures = Signatures(
-        train={
-            "image": tf.TensorSpec((None, 32, 32, 3)),
-            "label": tf.TensorSpec((None, 10)),
-        },
-        evaluate={
-            "image": tf.TensorSpec((None, 32, 32, 3)),
-            "label": tf.TensorSpec((None, 10)),
-        },
-        predict={"image": tf.TensorSpec((1, 32, 32, 3))},
-    )
-
     # Training
     # fmt: off
-    trainer = Trainer( train_stream, eval_stream, name="cifar10", ckpt_opts={"monitor": "accuracy/val"},
-                       export_opts={"signatures": export_signatures})
+    trainer = Trainer( train_stream, eval_stream, name="cifar10", ckpt_opts={"monitor": "accuracy/val"})
+    # export_opts={"signatures": export_signatures})
     # fmt: on
 
     # Add one or more models as required by the protocol
@@ -78,10 +66,12 @@ def train(args: argparse.Namespace):
     )
 
     # training protocol
+    # pylint: disable=unexpected-keyword-arg
     protocol = Classification(
         supervision_keys=("image", "label"), configurator=objective_configurer
     )
 
+    # Training
     trainer.spin(
         protocol,
         max_epochs=1,
@@ -89,8 +79,6 @@ def train(args: argparse.Namespace):
         verbose=VerbosityLevel.UPDATE_AT_BATCH,
         # skip_initial_evaluation=True,
     )
-
-    trainer.export(export_signatures=export_signatures)
 
 
 def configuration() -> argparse.Namespace:

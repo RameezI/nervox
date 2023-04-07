@@ -341,50 +341,50 @@ class ProgressParaphraser(Callback):
         ] else None
 
 
-class Exporter(Callback):
-    def __init__(
-        self, checkpoint_dir: os.PathLike, signature: Collection[tf.TensorSpec] = ()
-    ):
-        super(Exporter, self).__init__()
-        self.checkpoint_dir = checkpoint_dir
-        self._epoch: tf.Variable = tf.Variable(0, trainable=False, dtype=tf.int64)
-        if signature:
-            self.signature = (
-                signature if isinstance(signature, (list, tuple)) else (signature,)
-            )
+# class Exporter(Callback):
+#     def __init__(
+#         self, checkpoint_dir: os.PathLike, signature: Collection[tf.TensorSpec] = ()
+#     ):
+#         super(Exporter, self).__init__()
+#         self.checkpoint_dir = checkpoint_dir
+#         self._epoch: tf.Variable = tf.Variable(0, trainable=False, dtype=tf.int64)
+#         if signature:
+#             self.signature = (
+#                 signature if isinstance(signature, (list, tuple)) else (signature,)
+#             )
 
-    def _load_checkpoint(self):
-        checkpoint = tf.train.Checkpoint(
-            epoch=self._epoch,
-            **self.protocol.modules,
-            objectives=self._protocol.objectives,
-        )
-        latest_ckpt = tf.train.latest_checkpoint(self.checkpoint_dir)
-        if latest_ckpt is None:
-            raise FileNotFoundError
-        status = checkpoint.restore(latest_ckpt)
-        # status.expect_partial()
-        return status
+#     def _load_checkpoint(self):
+#         checkpoint = tf.train.Checkpoint(
+#             epoch=self._epoch,
+#             **self.protocol.modules,
+#             objectives=self._protocol.objectives,
+#         )
+#         latest_ckpt = tf.train.latest_checkpoint(self.checkpoint_dir)
+#         if latest_ckpt is None:
+#             raise FileNotFoundError
+#         status = checkpoint.restore(latest_ckpt)
+#         # status.expect_partial()
+#         return status
 
-    def on_train_end(self, _: Union[None, Dict[str, Number]] = None):
-        try:
-            ckpt_load_status = self._load_checkpoint()
-            ckpt_load_status.assert_existing_objects_matched()
-            export_dir = Path(self.run_dir, "export")
-            export_dir.mkdir(exist_ok=True)
+#     def on_train_end(self, _: Union[None, Dict[str, Number]] = None):
+#         try:
+#             ckpt_load_status = self._load_checkpoint()
+#             ckpt_load_status.assert_existing_objects_matched()
+#             export_dir = Path(self.run_dir, "export")
+#             export_dir.mkdir(exist_ok=True)
 
-        except FileNotFoundError:
-            sys.stdout.flush()
-            logger.warning(
-                "\ncheckpoint file not found by the checkpoint manager, skipping export!"
-            )
+#         except FileNotFoundError:
+#             sys.stdout.flush()
+#             logger.warning(
+#                 "\ncheckpoint file not found by the checkpoint manager, skipping export!"
+#             )
 
-        except AssertionError as e:
-            logger.error(str(e))
-            raise AssertionError(
-                "Checkpoint load failure!\n"
-                f"checkpoint directory: {self.checkpoint_dir}"
-            )
-        else:
-            signature = getattr(self, 'signatures', ())
-            self.protocol.export(export_dir, signature)
+#         except AssertionError as e:
+#             logger.error(str(e))
+#             raise AssertionError(
+#                 "Checkpoint load failure!\n"
+#                 f"checkpoint directory: {self.checkpoint_dir}"
+#             )
+#         else:
+#             signature = getattr(self, 'signatures', ())
+#             self.protocol.export(export_dir, signature)

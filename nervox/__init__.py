@@ -4,3 +4,4 @@ Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
 from .comps.trainer import Trainer
+from .comps.exporter import Exporter

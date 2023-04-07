@@ -6,6 +6,7 @@ Email: rameez.ismaeel@gmail.com
 
 import sys
 import os
+import io
 import re
 import json
 import datetime
@@ -40,6 +41,7 @@ class Signatures(tf.Module):
     evaluate: tf.TensorSpec = None
 
 
+
 @dataclass(frozen=True)
 class ComputeComplexity:
     flops: int = np.nan
@@ -54,7 +56,7 @@ class ComputeComplexity:
         return f"{'Total FLOPs':<20}: {self.flops:>20n}\n" \
                f"{'Total Parameters':<20}: {self.parameters:>20n}\n" \
                f"{'  Trainable':<20}: {self.trainable_parameters:>20n}\n" \
-               f"{'  Non-Trainable':<20}: {self.non_trainable_parameters:>20n}\n"
+               f"{'  Non-Trainable':<20}: {self.non_trainable_parameters:>20n}"
 
 #fmt:off
 def base_parser(training_component=True, data_component=True) -> argparse.ArgumentParser:
@@ -307,17 +309,29 @@ def plot_to_tf_image(figure):
 
 
 @contextlib.contextmanager
-def redirect_stdout(file: Union[os.PathLike, bytes, str]):
-    log_file = open(file, 'a')
+def redirect_stdout(target: Union[os.PathLike, bytes, io.StringIO]):
+    """Redirects the stdout to a file or a StringIO object
+    Args:
+        target (Union[os.PathLike, bytes, io.StringIO]): The target to redirect the stdout to, this can be a file path, a buffer or a StringIO object.
+    Yields:
+        target: the target object is returned from the context managerm, this can be a file path, a buffer or a StringIO object.
+        The redirection is done when you entered the context manager and is reverted back to the original stdout after the context manager is exited.
+    """
+    sys.stdout.flush()
     std_out = sys.stdout
+    log_file = None
     try:
-        sys.stdout.flush()
-        sys.stdout = log_file
-        yield log_file
+        if isinstance(target, io.StringIO):
+            sys.stdout = target
+            yield target
+        else:
+            log_file = open(target, 'a')
+            sys.stdout = log_file
+            yield log_file
     finally:
         sys.stdout.flush()
         sys.stdout = std_out
-        log_file.close()
+        log_file.close() if log_file else None
 
 
 if __name__ == '__main__':

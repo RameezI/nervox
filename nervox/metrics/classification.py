@@ -225,7 +225,9 @@ class ClassificationMetric(Metric, ABC):
             if self._value_sum is not None else None
     
     def result(self) -> TensorLike:
-        
+        if self._count is None:
+            raise ValueError(f'No data has been added to the `{self.name}` metric, I am unable to produce results!.')
+
         if self.average_mode in [AveragingMode.MACRO, AveragingMode.WEIGHTED]:
             if self.average_mode == AveragingMode.WEIGHTED:
                 count = tf.reduce_sum(self._count)
@@ -243,6 +245,7 @@ class ClassificationMetric(Metric, ABC):
         
         if tf.size(scores) == 1:
             scores = tf.reshape(scores, ())
+
         return scores
 
 
