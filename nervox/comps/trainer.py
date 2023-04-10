@@ -63,7 +63,7 @@ logger.setLevel(logging.DEBUG)
 
 # Aliases
 CallbackList = tf.keras.callbacks.CallbackList
-
+margin = 0
 class Trainer:
     # TensorFlow Distribution Schemes Validated by the nervox trainer
     named_distribution_schemes = {
@@ -547,8 +547,8 @@ class Trainer:
 
         self.write_config_to_disk()
 
-        # Printing the coinfiguration
-        print(f"\n{'':-<{self._progress_bar.terminal_size}}") if verbose not in [
+        # Printing the configuration
+        print(f"\n{'':-<{self._progress_bar.terminal_size - margin}}") if verbose not in [
             VerbosityLevel.KEEP_SILENT
         ] else None
         print(f"\n{self.name}/{self.run_id}:") 
@@ -609,11 +609,10 @@ class Trainer:
         # if warm_start and os.path.isfile(Path(self.checkpoint_dir, 'checkpoint')):
         #     ckpt_load_status.assert_consumed()
 
-        print(f"\n{'':-^{self._progress_bar.terminal_size}}") if verbose not in [
+        print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}") if verbose not in [
             VerbosityLevel.KEEP_SILENT
         ] else None
 
-        # Train end evaluation epochs
         if self._epoch.value() >= max_epochs:
             print(
                 f"Exiting ...\n"
@@ -625,6 +624,8 @@ class Trainer:
         else:
             start_epoch = int(self._epoch.assign_add(1).value())
             callbacks.on_train_begin(logs=logs_init_eval)
+
+            # Training - transverse through epochs executing the protocol
             for epoch in range(start_epoch, max_epochs + 1):
                 self._epoch.assign(epoch)
                 callbacks.on_epoch_begin(
@@ -673,7 +674,7 @@ class Trainer:
                 )
             callbacks.on_train_end()
 
-            print(f"\n{'':-^{self._progress_bar.terminal_size}}\n") if verbose not in [
+            print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}\n") if verbose not in [
                 VerbosityLevel.KEEP_SILENT
             ] else None
 
@@ -731,10 +732,10 @@ class Trainer:
             non_trainable_parameters=non_trainable_parameters,
         )
         if not silent:
-            print(f"\n{'':-^{self._progress_bar.terminal_size}}")
+            print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}")
             print(f"Compute Complexity [Prediction]:\n")
             print(self.predict_complexity)
-            print(f"{'':-^{self._progress_bar.terminal_size}}")
+            print(f"{'':-^{self._progress_bar.terminal_size - margin}}")
 
     def __str__(self):
         name = "unnamed" if self._name is None else self._name
