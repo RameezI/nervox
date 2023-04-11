@@ -52,17 +52,15 @@ def objective_configurer() -> Objective:
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     xentropy = CrossEntropy(transform=tf.nn.sigmoid)
     accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
-    objective = Objective(xentropy, optimizer=optimizer, metrics=[accuracy])
-    return objective
-
-# Leraning protocol
-protocol = Classification(
-    supervision_keys=("image", "label"), configurator=objective_configurer
-)
+    return Objective(xentropy, optimizer=optimizer, metrics=[accuracy])
 
 
 class Cifar10(FlowSpec):
-    # spin training protocol
+    """This is a pursuit for a learning classification task on CIFAR10 dataset. The workflow is defined in the
+    steps below. The pursuit is executed by running the following command: `python workflow_cifar10.py run`.
+    Args:
+        FlowSpec: The base class for all flowspecs.
+    """
 
     @step
     def start(self):
@@ -126,6 +124,12 @@ class Cifar10(FlowSpec):
             config={"output_units": 10},
         )
 
+        protocol = Classification(
+            supervision_keys=("image", "label"),
+            configurator=objective_configurer,
+        )
+
+        # spin the training protocol
         trainer.spin(
             protocol,
             max_epochs=10,

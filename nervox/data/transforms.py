@@ -6,9 +6,9 @@ Email: rameez.ismaeel@gmail.com
 
 import tensorflow as tf
 from typing import Union, Tuple
+from nervox.data import Transform
 from nervox.utils import capture_params
 import tensorflow_addons as tfa
-
 ResizeMethod = tf.image.ResizeMethod
 
 
@@ -39,8 +39,7 @@ class Prefetch:
         return dataset.prefetch(self.buffer_len)
 
 
-class Normalize:
-    @capture_params
+class Normalize(Transform):
     def __init__(self, mean=0.0, std=1.0, keys=('image',),
                  num_parallel_calls=tf.data.AUTOTUNE) -> None:
         self.mean = tf.constant(mean)

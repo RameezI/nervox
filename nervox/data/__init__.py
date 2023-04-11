@@ -5,3 +5,4 @@ Email: rameez.ismaeel@gmail.com
 """
 
 from .streamer import DataStream
+from .transform import Transform
