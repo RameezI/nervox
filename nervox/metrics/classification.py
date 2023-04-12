@@ -14,6 +14,7 @@ import tensorflow as tf
 from nervox.metrics import Metric
 from nervox.utils.types import TensorLike
 from nervox.utils import compose
+
 # Aliases
 tnp = tf.experimental.numpy
 
@@ -23,12 +24,6 @@ class AveragingMode(Enum):
     MICRO = 'micro'
     MACRO = 'macro'
     WEIGHTED = 'weighted'
-
-
-# def onehot_transform(x: TensorLike, axis=-1) -> tf.Tensor:
-#     indices = tf.argmax(x, axis=axis)
-#     onehot_predictions = tf.one_hot(indices, depth=x.shape[axis])
-#     return onehot_predictions
 
 
 def compute_confusion_matrix(y_true: TensorLike, y_pred: TensorLike,
