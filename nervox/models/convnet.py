@@ -37,7 +37,7 @@ class Convnet(tf.keras.Model):
                  data_format='channels_last',
                  dropout_rate=0.25
                  ):
-        super(Convnet, self).__init__()
+        super().__init__()
         axis = -1 if data_format == 'channels_last' else 1
         self.convolution_layers = list()
         self.pooling_layers = list()
@@ -102,9 +102,3 @@ class Convnet(tf.keras.Model):
             x = pooling(x)
             x = dropout(tf.nn.relu(x), training=training)
         return x
-    
-    def to_json(self):
-        params = getattr(self, 'params', {})
-        return {'module': self.__module__,
-                'class': type(self).__name__,
-                'config': dict(params)}

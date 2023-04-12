@@ -19,7 +19,6 @@ from nervox.losses import CrossEntropy
 from nervox.metrics.classification import AccuracyScore, AveragingMode
 from nervox.transforms import onehot_transform
 from nervox.core import Objective
-from nervox.utils import Signatures
 
 def objective_configurer() -> Objective:
     import tensorflow as tf

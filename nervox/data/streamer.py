@@ -152,20 +152,19 @@ class DataStream:
         data_stream._stream = distributed_data_stream
         return data_stream
     
-    def to_json(self):
-        params = copy(getattr(self, 'params', {}))
+    # def to_json(self):
+    #     params = copy(getattr(self, 'params', {}))
        
-        # convert dataset to string.
-        # TODO@Rameez: check, what happens if this is a tf.data.Dataset class
-        # can we create a json paramerization from the dataset object?
-        params.update({'dataset': str(params['dataset'])})
+    #     # convert dataset to string.
+    #     # TODO@Rameez: check, what happens if this is a tf.data.Dataset class is passed?
+    #     # params.update({'dataset': str(params['dataset'])})
        
-        # convert transforms to json serializable format.
-        #  Only possible if parametrization is json serializable.
-        transforms = [{'module': transform.__module__,
-                       'class': type(transform).__name__,
-                       'config': getattr(transform, 'params', {})
-                       } for transform in params['transforms']]
+    #     # # convert transforms to json serializable format.
+    #     # #  Only possible if parametrization is json serializable.
+    #     # transforms = [{'module': transform.__module__,
+    #     #                'class': type(transform).__name__,
+    #     #                'config': getattr(transform, 'params', {})
+    #     #                } for transform in params['transforms']]
         
-        params.update({'transforms': transforms})
-        return params
+    #     # params.update({'transforms': transforms})
+    #     return params

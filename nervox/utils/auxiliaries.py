@@ -21,7 +21,7 @@ from functools import wraps
 from dataclasses import dataclass
 from pathlib import Path
 import matplotlib.pyplot as plt
-from typing import Union, Tuple, Callable
+from typing import Union, Tuple, Callable, Dict, Any
 from enum import Enum
 
 
@@ -198,13 +198,91 @@ def serialize_to_json(self):
             f"Failed while attempting to serialize an object of class `{type(self).__name__}`\n"
             f" {str(e)}"
         )
-
     return json_serialization
+
+
+def is_jsonable(x):
+    try:
+        json.dumps(x)
+        return True
+    except (TypeError, OverflowError):
+        return False
+
+
+def expand_params(config: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_parmeterization(obj: Any) -> Dict[str, Any]:
+        Parameterization = None
+
+        if isinstance(obj, (tuple, list, set)):
+            Parameterization = []
+            for item in obj:
+                Parameterization.append(_get_parmeterization(item))
+            Parameterization = tuple(Parameterization)
+
+        elif isinstance(obj, dict):
+            Parameterization = {}
+            for key, item in obj.items():
+                Parameterization[key] = _get_parmeterization(item)
+            Parameterization = dict(Parameterization)
+
+        else:
+            if hasattr(obj, "params") and hasattr(obj, "__init__"):
+                Parameterization = obj.params
+
+            if not is_jsonable(Parameterization):
+                raise ValueError(
+                    f"Cannot acquire JSON serializable Parameterization of Object:\n"
+                    f"module: `{type(obj).__module__}`\n"
+                    f"class: `{type(obj).__name__}\n"
+                )
+
+        return Parameterization
+
+    expanded_config = {}
+    for key, value in config.items():
+        if isinstance(value, dict):
+            expanded_config[key] = expand_params(value)
+        elif not is_jsonable(value):
+            parameterization = _get_parmeterization(value)
+            if parameterization is None:
+                raise ValueError(
+                    f"{key}: Object `{type(value)}` is not JSON serializable"
+                    " and does not provide parameterization."
+                )
+        else:
+            expanded_config[key] = value
+
+    return expanded_config
 
 
 def capture_params(*args_outer, **kwargs_outer):
     ignore_list = kwargs_outer.get("ignore", [])
     apply_local_updates = kwargs_outer.get("apply_local_updates", False)
+
+    def _validate_params_attribute_usage(params):
+        if not isinstance(params, dict):
+            raise TypeError(
+                "The `params` attribute must be a dictionary of type `Dict[str, JSONSerializable]`"
+            )
+
+        elif ["__class__", "__module__"] not in list(params.keys()):
+            raise ValueError(
+                "The `params` attribute must be a dictionary of type `Dict[str, JSONSerializable]`"
+                " and must contain `__class__` and `__module__` keys."
+            )
+
+        else:
+            for key, value in params.items():
+                if not isinstance(key, str):
+                    raise TypeError(
+                        "The `params` attribute must be a dictionary of type `Dict[str, JSONSerializable]`\n"
+                        f"keys must be of type `str` but received: {type(key).__name__}"
+                    )
+                if not is_jsonable(value):
+                    raise TypeError(
+                        "The `params` attribute must be a dictionary of type `Dict[str, Any]`\n"
+                        f"values must be JSON serializable but received: {type(value).__name__}"
+                    )
 
     def _capture_params(func):
         if (not inspect.isfunction(func)) or inspect.isclass(func):
@@ -239,16 +317,37 @@ def capture_params(*args_outer, **kwargs_outer):
                     " Please use positional arguments or keywords only arguments for the (decorated) function definition!"
                 )
 
-            obj.params = obj.params if hasattr(obj, "params") else {}
+            if hasattr(obj, "params"):                
+                try:
+                    _validate_params_attribute_usage(obj.params)
 
-            params = obj.params.get(
-                func.__name__,
-                {
+                except ValueError:
+                    raise AttributeError(
+                        f"Automatic parameterization is setup for your class `{type(obj).__name__}, this means that `params`\n"
+                        "attribute is set automatically for your class instance. However, an illegal use of the attribute is detected.\n."
+                        "Please make sure you are not using `params` for other purposes as it is reserved fo automatic parameterization."
+                    )
+
+            # TODO: FIXIT#1: This try and except block is a temporary fix for the issue of `params` attribute not being set for the `Model` class.
+            #      This is a temporary fix and will be removed in future. The `params` attribute should be set for the `Model` class
+            #      however keras does not provide a way to do so wiuout first initializing the base class first. ::disappointed :(
+            try:
+                obj.params = obj.params if hasattr(obj, "params") else {}
+
+                params = obj.params.get(
+                    func.__name__,
+                    {
+                        param.name: param.default
+                        for param in parameters
+                        if param.name not in ignore_list
+                    },
+                )
+            except RuntimeError:
+                params = {
                     param.name: param.default
                     for param in parameters
                     if param.name not in ignore_list
-                },
-            )
+                }
 
             params.update(
                 {key: value for key, value in kwargs.items() if key not in ignore_list}
@@ -279,7 +378,14 @@ def capture_params(*args_outer, **kwargs_outer):
             try:
                 sys.setprofile(profiler)
                 func(obj, *args, **kwargs)
+
+                # FIXIT#1: this is related to the same fix, see above.
+                # This is not needed once the attribute assignment above can be carried out for all classes.
+                obj.params = obj.params if hasattr(obj, "params") else {}
+                params = expand_params(params)
                 obj.params[func.__name__] = params
+                obj.params["__module__"] = type(obj).__module__
+                obj.params["__class__"] = type(obj).__name__
 
             finally:
                 sys.setprofile(_profile)
@@ -318,14 +424,6 @@ def get_default_exp_dir(dataset_name=None, model_name=None):
         else "untitled"
     )
     return os.path.expanduser(os.path.join("~", "tensorflow_logs", exp_dir))
-
-
-def is_jsonable(x):
-    try:
-        json.dumps(x)
-        return True
-    except (TypeError, OverflowError):
-        return False
 
 
 def get_urid():

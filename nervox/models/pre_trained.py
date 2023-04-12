@@ -23,12 +23,6 @@ class FeatureExtractorKeras(tf.keras.Model):
         training = training if self._model.trainable else False
         x = self._model(x, training=training)
         return x
-    
-    def to_json(self):
-        params = getattr(self, 'params', {})
-        return {'module': self.__module__,
-                'class': type(self).__name__,
-                'config': dict(params)}
 
 
 class DenseNet121(FeatureExtractorKeras):

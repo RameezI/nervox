@@ -684,11 +684,11 @@ class Trainer:
             "name": self.name,
             "run_id": self.run_id,
             "data_streams": {
-                key: value.to_json() if value is not None else None
+                key: getattr(value, 'params') if value is not None else None
                 for key, value in self._data_streams.items()
             },
             "models": {
-                key: value.to_json() if value is not None else None
+                key: getattr(value, 'params') if value is not None else None
                 for key, value in self.models.items()
             },
             "checkpointer": self._checkpointer_config,

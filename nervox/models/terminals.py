@@ -40,12 +40,6 @@ class GlobalAvgPoolDecoder(tf.keras.Model):
             if self.top_fcn is not None else x
         x = self.dropout(x, training=training)
         return self.classifier(x)
-    
-    def to_json(self):
-        params = getattr(self, 'params', {})
-        return {'module': self.__module__,
-                'class': type(self).__name__,
-                'config': dict(params)}
 
 
 class MLDecoder(tf.keras.Model):
@@ -104,9 +98,3 @@ class MLDecoder(tf.keras.Model):
         x = self.dropout_readout(x, training=training)
         logits = self.read_out_layer(x)
         return logits
-    
-    def to_json(self):
-        params = getattr(self, 'params', {})
-        return {'module': self.__module__,
-                'class': type(self).__name__,
-                'config': dict(params)}
