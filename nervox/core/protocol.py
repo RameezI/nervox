@@ -16,7 +16,7 @@ from nervox.data import DataStream
 from nervox.utils import snake_to_camel, Signatures
 
 # Aliases
-CallbackList = tf.keras.callbacks.CallbackList
+# CallbackList = tf.keras.callbacks.CallbackList
 
 
 class Protocol(tf.Module):

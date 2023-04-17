@@ -256,8 +256,8 @@ def expand_params(config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def capture_params(*args_outer, **kwargs_outer):
-    ignore_list = kwargs_outer.get("ignore", [])
-    apply_local_updates = kwargs_outer.get("apply_local_updates", False)
+    ignore_list = kwargs_outer.pop("ignore", [])
+    apply_local_updates = kwargs_outer.pop("apply_local_updates", False)
 
     def _validate_params_attribute_usage(params):
         if not isinstance(params, dict):
