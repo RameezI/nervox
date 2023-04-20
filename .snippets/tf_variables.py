@@ -86,7 +86,7 @@ if  __name__ == "__main__":
         a, b = create_variables()
     print(f"(a,  b): ({a.numpy()}, {b.numpy()})")
     loss = compute_loss()
-    print(loss) # invoke the function to create graph
+    print(loss) 
     graph = compute_loss.get_concrete_function().graph
     print(graph.as_graph_def())
     print("\n")
