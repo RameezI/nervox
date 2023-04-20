@@ -5,6 +5,8 @@ from typing import Tuple
 from pathlib import Path
 import logging
 
+
+print(f'tf=__version__: {tf.__version__}')
 logging.basicConfig(level=logging.INFO, format=" %(message)s")
 logger = logging.getLogger("tf_recursive")
 logger.setLevel(logging.INFO)
@@ -13,7 +15,7 @@ logger.setLevel(logging.INFO)
 _MAX_RECURSION_DEPTH = 50
 
 def create_variables() -> Tuple[tf.Variable, tf.Variable]:
-    """This function creates the variables x and y and initializes them with random values.
+    """This function creates the variables.
     Returns:
         Tuple(tf.Variable, tf.Variable): Duplet of tf.Variable
     """
@@ -23,7 +25,8 @@ def create_variables() -> Tuple[tf.Variable, tf.Variable]:
 class TerminalModule(tf.Module):
     def __init__(self, a, b):
         """
-        A module that takes two variables as input and computes some loss.
+        A module that takes two variables as input and computes some arbitrary
+        function.
             Args:
                 a (tf.Variable): The variable a tracked by the module.
                 b (tf.Variable): The variable b tracked by the module.
@@ -45,20 +48,15 @@ class MyModule(tf.Module):
    
     def __init__(self):
         """This recursive module creates a tree of modules.
-        The tree is created by creating a parent module and two children modules.
-        ``` 
-        The structure (depth==2) of the tree is as follows:  
+        The structure (at depth==2) of the tree is as follows:  
           
             ²{ ¹{ ⁰{p, q}⁰, q }¹, q}²
     
         MyModule (parent) 
-        --> self.p MyModule (child)
-            --> self.p MyModule (grandchild)
-                --> self.p (a terminal module)
-                --> self.q (a terminal module)
-            --> self.q (a terminal module)
-   
-        ```
+          self.p MyModule (child)
+              --> self.p (grandchild - terminal module)
+              --> self.q (grandchild - terminal module)
+          self.q (child - terminal module)
         """
         super().__init__()
 
@@ -84,15 +82,13 @@ class MyModule(tf.Module):
 class MyModuleMono(tf.Module):
     max_depth: int = _MAX_RECURSION_DEPTH
     def __init__(self):
-        """This recursive module creates a tree of modules. Here we create a monolithic module, that
-        does the exact same computations as the recursive module above, but in a single module. This
-        is to understand the implications, memory and storage wise, of using a recursive module vs a
-        monolithic module by looking at the SavedModel.
+        """Here we create a monolithic module, that does the exact same computations
+        as the recursive module above, but in a single call. This is to understand the
+        implications, memory and storage wise, of using a recursive module vs a
+        monolithic module afterwards by looking at the SavedModel.
 
         The recursive module simply adds the compute results of all the terminal modules in the 
-        recursive tree. one recursion level creates two children modules and four variables. One
-        of those child can subdivide into two children modules and four variables at the next
-        level. (Asymmetric development)
+        recursive tree. Each recursion level creates an additional module (asymmetric development).
 
         --> at recursion depth == 0
              2 + 0 = 2 modules and 4 variables are created.
@@ -133,22 +129,19 @@ def get_dir_size(dir_path):
 
 if __name__ == "__main__":
     """This is the main function that creates a recursive module and a monolithic module with same number
-      of variables and compute. The final modules are exported to a SavedModel and the SavedModel. We want
-      to evaluate if the recursive module is a good idea or not. The learning from this are listed below:
+      of variables and compute. The final modules are exported to a SavedModel.
 
-        Learnings:
-            - Using a recursive module, it does not seem to be possible to export only the parent and the
-              immediate children. The SavedModel will contain the entire tree of modules. This wastes
-              memory and storage space and is not desirable. Also recursive modules often hit the recursion
-              limit of Python and thus would not be ap practical approach. For example, if we set the
-              recursion depth to 50, the SavedModel will contain 2 + 50 = 52 modules, 50 of which are
-              child modules to whom we want to restrict access. The naively saved SavedModel >2x increase
-              in model file and ~3x increase in variable storage compared to a monolithic module. 
+      Observations:
+            - Using the recursive module, the SavedModel contains the entire tree of modules, wastes  memory
+              and storage space. For example, if we set the recursion depth to 50, the SavedModel will
+              contain 2 + 50 = 52 modules, 50 of which are child modules to whom we want to restrict access.
+              The naively saved SavedModel ~3x increase in model definition size and ~3x increase in variable
+              storage compared to a monolithic module. 
 
-            - The monolithic module here is only for comparison purposes. It is not a good idea to use
-              monolithic modules as they are not modular and are not easy to maintain.The ideal solution
-              is to use a modular approach that provides resource restriction:
-                - Restrict access to variables and functions to only the immediate children.
+            - The monolithic module here is  for comparison purposes, it has same number of variables and compute.
+              The ideal solution would be to able to use resource restriction while exporting a recursively built
+              module:  restrict access to variables and compute to only the immediate module or to children at 
+              certain depth only.
 
     """
     with tf.device("/cpu:0"):

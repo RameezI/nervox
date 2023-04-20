@@ -4,7 +4,7 @@ import tensorflow as tf
 from typing import Tuple
 
 """
-This is a sample script to demonstrate how to use TensorFlow to compute using tf variables.
+This is a sample script to demonstrate how to use tf variables.
 lets solve the following problem:
 
     ```

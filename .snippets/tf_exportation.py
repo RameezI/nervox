@@ -3,7 +3,21 @@ import numpy as np
 import tensorflow as tf
 from typing import Tuple
 from pathlib import Path
+import logging
 
+
+print(f'tf=__version__: {tf.__version__}')
+logging.basicConfig(level=logging.INFO, format=" %(message)s")
+logger = logging.getLogger("tf_recursive")
+logger.setLevel(logging.DEBUG)
+
+"""
+This is a sample script to demonstrate how to export a tf.Module.
+It contains a module with an arbitrary compute method comprised of
+two variables. The variables are created outside the module and are
+passed to the module as arguments. The module is exported and loaded
+back to demonstrate that the variables are saved and loaded correctly.
+"""
 
 def create_variables() -> Tuple[tf.Variable, tf.Variable]:
     """This function creates the variables x and y and initializes them with random values.
@@ -29,7 +43,7 @@ class MyModule(tf.Module):
         self.a, self.b = (a, b)
 
     @tf.function
-    def compute_loss(self):
+    def compute(self):
         y = self.a**2 + self.b**2 - 6 * self.a + 2 * self.b + 9
         return y**2
 
@@ -45,42 +59,40 @@ if __name__ == "__main__":
     with tf.device("/cpu:0"):
         a, b = create_variables()
         module = MyModule(a, b)
-        print(f"(a,  b): ({module.a.numpy()}, {module.b.numpy()})")
-        print("\n")
-
-    graph = module.compute_loss.get_concrete_function().graph
-    print("\n")
+       
+    graph = module.compute.get_concrete_function().graph
 
     # print the resource handles
-    print(f"resource/x = {module.a.handle}")
-    print(f"resource/y = {module.b.handle}")
-    print("\n")
+    logger.debug(f"\nResource Handles:")
+    logger.debug(f"resource/a = {module.a.handle}")
+    logger.debug(f"resource/b = {module.b.handle}")
 
     # captured variables/placeholders
-    print("Variable name to placeholder mapping:")
+    print("\nVariable name to placeholder mapping:")
     for var, placeholder in graph.captures:
-        print(f"{var} -->  {placeholder}")
-    print("\n")
+        logger.debug(f"{var} -->  {placeholder}")
 
     # export the module to a SavedModel
     with tempfile.TemporaryDirectory() as export_dir:
+        logger.info(f"\nExporting the module to {export_dir}")
         tf.saved_model.save(module, export_dir)
-        [print(item) for item in list(Path(export_dir).rglob("*"))]
-        print("\n")
+        [logger.info(item) for item in list(Path(export_dir).rglob("*"))]
 
         # list all variables in the SavedModel
         with tf.device("/cpu:0"):
             restored_module = tf.saved_model.load(export_dir)
-            print(type(restored_module))
+            logger.info(f'\nRestored model of type: {type(restored_module)}')
 
-        print(module.trainable_variables)
-        print("Variables in the Restored Model:")
-        print(f"a: {restored_module.a}")
-        print(f"b: {restored_module.b}")
-        print("\n")
+        logger.info("\nVariables in the original module:")
+        #logger.info(f'variables: {module.variables}')
+        logger.info(f"(a,  b): ({module.a.numpy()}, {module.b.numpy()})\n")
+        
 
-        restored_graph = restored_module.compute_loss.get_concrete_function().graph
-        print("Variable name to placeholder mapping in the restored function:")
+        logger.info("\nVariables in the restored module:")
+        #logger.info(f'variables: {restored_module.variables}')
+        logger.info(f"(a,  b): ({restored_module.a.numpy()}, {restored_module.b.numpy()})\n")
+        
+        restored_graph = restored_module.compute.get_concrete_function().graph
+        logger.info("\nVariable name to placeholder mapping in the restored function:")
         for var, placeholder in restored_graph.captures:
-            print(f"{var} -->  {placeholder}")
-        print("\n")
+            logger.info(f"{var} -->  {placeholder}")
