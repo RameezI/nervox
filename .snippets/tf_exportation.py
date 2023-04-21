@@ -9,7 +9,7 @@ import logging
 print(f'tf=__version__: {tf.__version__}')
 logging.basicConfig(level=logging.INFO, format=" %(message)s")
 logger = logging.getLogger("tf_recursive")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 """
 This is a sample script to demonstrate how to export a tf.Module.
