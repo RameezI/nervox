@@ -1,7 +1,12 @@
+"""
+This script shows how to compute the gradient of a function with respect to a variable
+is computed using the tf.GradientTape context manager.
+"""
 
 import tensorflow as tf
-
-
+import logging
+logging.basicConfig(level=logging.INFO, format=' %(message)s')
+logger = logging.getLogger("tf_gradients")
 
 # Define a function
 def f(x):
@@ -31,12 +36,10 @@ if __name__ == "__main__":
     grad_c = tape.gradient(output, c)
     
        # Print the result
-    print(f'd/dx: --> {grad_x:>5}')
-    print(f'd/da: --> {grad_a:>5}')
-    print(f'd/db: --> {grad_b:>5}')
-    print(f'd/dc: --> {grad_c:>5}')
+    logger.info('\nGradients Computed by tf.GradientTape:')
+    logger.info(f'd/dx: --> {grad_x:>5}')
+    logger.info(f'd/da: --> {grad_a:>5}')
+    logger.info(f'd/db: --> {grad_b:>5}')
+    logger.info(f'd/dc: --> {grad_c:>5}')
 
     del tape  # Drop the reference to the tape
-    
- 
-

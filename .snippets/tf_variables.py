@@ -1,23 +1,18 @@
-import io
+
+"""
+This snippet demonstrates how the variables are created and how they are handled by the
+TensorFlow resource management system. 
+"""
+
 import numpy as np
 import tensorflow as tf
 from typing import Tuple
+import logging
 
-"""
-This is a sample script to demonstrate how to use tf variables.
-lets solve the following problem:
 
-    ```
-    consider the following polynomial relation:
-    a^2 + b^2 - 6a + 2b + 9 = 0
-    we want to find a solution for the above equation!
-
-    we can write it as minimization problem:
-    minimize the f(a, b)^2 wrt a and b:
-
-        where y = f(a, b) = a^2 + b^2 - 6a + 2b + 9
-    ```
-"""
+logging.basicConfig(level=logging.INFO, format=' %(message)s')
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("tf_variables")
 
 def create_variables()->Tuple[tf.Variable, tf.Variable]:
     """This function creates the variables x and y and initializes them with random values.
@@ -27,13 +22,15 @@ def create_variables()->Tuple[tf.Variable, tf.Variable]:
     return tf.Variable(np.random.rand()), tf.Variable(np.random.rand())
 
 @tf.function
-def compute_loss():
+def compute():
     y = a**2+ b**2 - 6*a + 2*b + 9  
     return y**2
 
+
 if  __name__ == "__main__":
-    """This is the main function that creates the variables and computes the loss.
-       The loss is computed using the function compute_loss and is wrapped in a tf.function
+    """This is the main function that creates the variables and computes an arbitrary function.
+       The compute function is wrapped in a tf.function thus generates a graph definition.
+
        Learnings:
 
         - Variables are created using tf.Variable, normally, outside the graph building context,
@@ -82,30 +79,33 @@ if  __name__ == "__main__":
         - A graph building context is created using tf.function,
 
     """
+    
     with tf.device("/cpu:0"):
         a, b = create_variables()
-    print(f"(a,  b): ({a.numpy()}, {b.numpy()})")
-    loss = compute_loss()
-    print(loss) 
-    graph = compute_loss.get_concrete_function().graph
-    print(graph.as_graph_def())
-    print("\n")
+    logger.info("\nVariables:")
+    logger.info(f"(a,  b): ({a.numpy()}, {b.numpy()})")
+    out = compute()
+    logger.info(f"compute results: {out}")
+
+    logger.info("\nGraph Definition:")
+    graph = compute.get_concrete_function().graph
+    logger.info(graph.as_graph_def())
 
     # print the resource handles 
+    logger.info("\nResource Handles:")
     print(f'resource/x = {a.handle}')
     print(f'resource/y = {b.handle}')
-    print('\n')
-
+    
     # captured variables/placeholders
-    print("Variable name to placeholder mapping:")
+    logger.info("\nVariable name to placeholder mapping:")
     for var, placeholder in graph.captures:
         print(f'{var} -->  {placeholder}')
-    print("\n")
 
     del a, b    # The underlying resource is not deleted!    
     # execute the function without tracing, to confirm that the variables are not deleted
-    print(f"loss before deleting the variables: {loss}"
-           f" == loss after deleting the variables: {compute_loss()}")
+    logger.info("\nRecompute after deleting the python variables:")
+    logger.info(f"original: {out}")
+    logger.info(f"recompute: {compute()}")
 
 
 
