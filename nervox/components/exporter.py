@@ -3,7 +3,7 @@ import logging
 import tensorflow as tf
 from typing import Dict
 from pathlib import Path
-from nervox.core.protocol import Protocol
+from nervox.protocols.protocol import Protocol
 from nervox.utils import Signatures
 from dataclasses import asdict
 

@@ -7,8 +7,8 @@ import tempfile
 import tensorflow as tf
 from absl.testing import parameterized
 from tensorflow.python.distribute import combinations
-from nervox.core import Protocol
-from nervox.core import Objective
+from nervox.transcoders import Protocol
+from nervox.transcoders import Objective
 from nervox.data import DataStream
 from nervox import Trainer
 

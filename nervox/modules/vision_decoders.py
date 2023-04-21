@@ -7,7 +7,7 @@ Email: rameez.ismaeel@gmail.com
 import tensorflow as tf
 from typing import Union
 from nervox.utils import capture_params
-from nervox.modules import \
+from nervox.modules.ml_decoder import \
     MLDecoderAttention, StackedDense
 
 l2 = tf.keras.regularizers.l2

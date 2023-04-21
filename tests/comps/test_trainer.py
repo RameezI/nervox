@@ -9,8 +9,8 @@ import tensorflow as tf
 from nervox import Trainer
 from nervox.data import DataStream
 from nervox.protocols import Classification
-from nervox.models.terminals import GlobalAvgPoolDecoder
-from nervox.models import DenseNet121
+from nervox.modules.vision_decoders import GlobalAvgPoolDecoder
+from nervox.modules.visencoders import DenseNet121
 
 
 class TestTrainer(tf.test.TestCase):

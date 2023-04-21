@@ -27,7 +27,7 @@ This doen't work if tensorflow is imported before setting the env variable.
 
 import tensorflow as tf
 from pathlib import Path
-from nervox.core.callbacks import Callback
+from nervox.callbacks.callbacks import Callback
 from typing import Union, List, Tuple, Dict, Iterable, Type, Any
 
 # graph analysis tools
@@ -36,11 +36,11 @@ from tensorflow.python.profiler.option_builder import ProfileOptionBuilder
 
 # Bring in some core types/modules of nervox
 from nervox.data import DataStream
-from nervox.core import Protocol
+from nervox.transcoders import Protocol
 
 from nervox.utils import ProgressBar, ModeProgressBar
 
-from nervox.core.callbacks import CheckPointer, ProgressParaphraser  # , Exporter
+from nervox.callbacks.callbacks import CheckPointer, ProgressParaphraser  # , Exporter
 
 from nervox.utils import (
     get_urid,
@@ -338,8 +338,8 @@ class Trainer:
                 return candidate_key
 
             if isinstance(model, str):
-                pkg = "nervox" if pkg is None else pkg
-                module = importlib.import_module(f".models.{model}", package=pkg)
+                pkg = "nervox.modules" if pkg is None else pkg
+                module = importlib.import_module(f".{model}", package=pkg)
                 search_term = model if inception_class is None else inception_class
                 class_members = inspect.getmembers(module, inspect.isclass)
                 class_members = dict(

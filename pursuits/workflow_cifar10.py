@@ -6,7 +6,7 @@ Email: rameez.ismaeel@gmail.com
 
 import argparse
 import logging
-from nervox.core import Objective
+from nervox.transcoders import Objective
 from metaflow import FlowSpec, step
 from nervox.protocols import Classification
 
@@ -44,7 +44,7 @@ def objective_configurer() -> Objective:
     Returns: Training Objective(s). Objective is a combination of a loss function, an optimizer and metrics.
     """
     import tensorflow as tf
-    from nervox.core import Objective
+    from nervox.transcoders import Objective
     from nervox.losses import CrossEntropy
     from nervox.metrics.classification import AccuracyScore, AveragingMode
     from nervox.transforms import onehot_transform
@@ -76,7 +76,7 @@ class Cifar10(FlowSpec):
         from nervox.data.transforms import Normalize, OneHotLabels
         from nervox.data import DataStream
         from nervox.utils import VerbosityLevel
-        from nervox.models.terminals import GlobalAvgPoolDecoder
+        from nervox.modules.vision_decoders import GlobalAvgPoolDecoder
 
         # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         # os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"

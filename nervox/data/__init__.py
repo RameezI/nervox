@@ -4,5 +4,5 @@ Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
 
-from .streamer import DataStream
+from .data_stream import DataStream
 from .transform import Transform

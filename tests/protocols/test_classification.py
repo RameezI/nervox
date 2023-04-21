@@ -10,7 +10,7 @@ from nervox.data import DataStream
 from nervox.protocols import Classification
 from tensorflow.python.distribute import combinations
 from tensorflow.python.distribute import strategy_combinations
-from nervox.models import GlobalAvgPoolDecoder
+from nervox.modules.visencoders import GlobalAvgPoolDecoder
 
 
 distributors = [tf.distribute.get_strategy(),

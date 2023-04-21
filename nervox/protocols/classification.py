@@ -6,13 +6,13 @@ Email: rameez.ismaeel@gmail.com
 
 import tensorflow as tf
 from typing import Tuple, Dict, Union, Callable
-from nervox.core.protocol import Protocol
-from nervox.core import Objective
+from nervox.protocols.protocol import Protocol
+from nervox.transcoders import Objective
 
 # objective configurator
 from nervox.losses import CrossEntropy
 from nervox.metrics.classification import AccuracyScore, AveragingMode
-from nervox.transforms import onehot_transform
+from nervox.utils import onehot_transform
 
 
 class Classification(Protocol):

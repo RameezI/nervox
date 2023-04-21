@@ -3,30 +3,29 @@ Copyright (C) 2021 Rameez Ismail - All Rights Reserved
 Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
-import json
 
 import tensorflow as tf
 from nervox.utils import capture_params
 
 
-class Convnet(tf.keras.Model):
-    """ This class creates a convolution network which should achieve ~85% accuracy on CIFAR-10 dataset when learning
-        the default classification objective in the nervox. This model is mainly used to test and verify the
-        health of the nervox. This script also serves as a canonical form of defining a neural network model
-        within the nervox.
+class ConvnetEncoder(tf.keras.Model):
+    """ This class creates a simple convolution encoder network which should achieve ~85% accuracy on CIFAR-10
+     dataset when learning the default classification objective in the nervox. This model is mainly used to test
+     and verify the health of the nervox framework. This script also serves as a canonical form of defining a
+     neural network model within the nervox framework.
+
+    The training configuration leading to 85% test accuracy :
+        'epochs': 50,
+        'batch_size': 64,
+        'strategy': 'explicit_supervision',
+        'learning_rates': {0: 1e-2, 30: 1e-3},
         
-        The training configuration leading to 85% test accuracy :
-             'epochs': 50,
-             'batch_size': 64,
-             'strategy': 'explicit_supervision',
-             'learning_rates': {0: 1e-2, 30: 1e-3},
-            
-        Arguments:
-        conv_layers:            A list of k elements providing number of filters for k convolution layers
-        neurons_per_layer:      A list of k elements providing number of neurons for k dense layers
-        output_classes:         number of output classes.
-        data_format:            "channels_first" or "channels_last"
-       """
+    Arguments:
+    conv_layers:            A list of k elements providing number of filters for k convolution layers
+    neurons_per_layer:      A list of k elements providing number of neurons for k dense layers
+    output_classes:         number of output classes.
+    data_format:            "channels_first" or "channels_last"
+    """
     
     def get_config(self):
         return getattr(self, 'params', dict())

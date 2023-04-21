@@ -3,18 +3,19 @@ Copyright (C) 2021 Rameez Ismail - All Rights Reserved
 Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
+
 import os
 import sys
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
 from typing import Dict
-from nervox.core.protocol import Protocol
+from nervox.protocols.protocol import Protocol
 from nervox.utils.progress_bar import ProgressBar
 from nervox.utils.types import Number
 from nervox.utils.auxiliaries import VerbosityLevel
 from datetime import datetime as dt
-from typing import Union, Collection
+from typing import Union
 import logging
 
 logger = logging.getLogger(__name__)
@@ -155,7 +156,7 @@ class CheckPointer(Callback):
         Args:
             checkpoint_dir:         The directory where the checkpoints are created.
             monitor:                The monitored variable
-            silent:                 Weather to print updates on checkpointing event
+            silent:                 Weather to print updates on checkpoint event
             keep_best:              Weather to keep the best, based on the monitored value, or the last checkpoint.
             mode:                   How to determine the best checkpoint based on the monitored variable,
                                     accepts one of [`min`, `max`, `auto`]
@@ -339,52 +340,3 @@ class ProgressParaphraser(Callback):
         print(f"\r{self._progress_bar}", end="") if self.verbose not in [
             VerbosityLevel.KEEP_SILENT
         ] else None
-
-
-# class Exporter(Callback):
-#     def __init__(
-#         self, checkpoint_dir: os.PathLike, signature: Collection[tf.TensorSpec] = ()
-#     ):
-#         super(Exporter, self).__init__()
-#         self.checkpoint_dir = checkpoint_dir
-#         self._epoch: tf.Variable = tf.Variable(0, trainable=False, dtype=tf.int64)
-#         if signature:
-#             self.signature = (
-#                 signature if isinstance(signature, (list, tuple)) else (signature,)
-#             )
-
-#     def _load_checkpoint(self):
-#         checkpoint = tf.train.Checkpoint(
-#             epoch=self._epoch,
-#             **self.protocol.modules,
-#             objectives=self._protocol.objectives,
-#         )
-#         latest_ckpt = tf.train.latest_checkpoint(self.checkpoint_dir)
-#         if latest_ckpt is None:
-#             raise FileNotFoundError
-#         status = checkpoint.restore(latest_ckpt)
-#         # status.expect_partial()
-#         return status
-
-#     def on_train_end(self, _: Union[None, Dict[str, Number]] = None):
-#         try:
-#             ckpt_load_status = self._load_checkpoint()
-#             ckpt_load_status.assert_existing_objects_matched()
-#             export_dir = Path(self.run_dir, "export")
-#             export_dir.mkdir(exist_ok=True)
-
-#         except FileNotFoundError:
-#             sys.stdout.flush()
-#             logger.warning(
-#                 "\ncheckpoint file not found by the checkpoint manager, skipping export!"
-#             )
-
-#         except AssertionError as e:
-#             logger.error(str(e))
-#             raise AssertionError(
-#                 "Checkpoint load failure!\n"
-#                 f"checkpoint directory: {self.checkpoint_dir}"
-#             )
-#         else:
-#             signature = getattr(self, 'signatures', ())
-#             self.protocol.export(export_dir, signature)

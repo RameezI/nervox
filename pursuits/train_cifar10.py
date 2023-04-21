@@ -4,21 +4,26 @@ Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
 
+import os
 import argparse
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 from nervox import Trainer
+
+from nervox.objectives import Objective
 from nervox.protocols import Classification
 from nervox.utils import base_parser, VerbosityLevel
-from nervox.data.transforms import Normalize, OneHotLabels
+
+from nervox.modules import GlobalAvgPoolDecoder
+
 from nervox.data import DataStream
-from nervox.models.terminals import GlobalAvgPoolDecoder
+from nervox.data.transforms import Normalize, OneHotLabels
 
 # objective configurator
 from nervox.losses import CrossEntropy
-from nervox.metrics.classification import AccuracyScore, AveragingMode
-from nervox.transforms import onehot_transform
-from nervox.core import Objective
+from nervox.metrics import AccuracyScore, AveragingMode
+from nervox.utils import onehot_transform
+
 
 def objective_configurer() -> Objective:
     import tensorflow as tf
@@ -81,7 +86,7 @@ def train(args: argparse.Namespace):
 
 
 def configuration() -> argparse.Namespace:
-    """Returns the default options for the experiment (configurable through the commandline)"""
+    """Returns the default options for the experiment (configurable through cli)"""
     parser = argparse.ArgumentParser(parents=[base_parser()])
     parser.add_argument(
         "--dataset_version",
@@ -94,7 +99,7 @@ def configuration() -> argparse.Namespace:
         "--encoder",
         required=False,
         type=str,
-        default="convnet",
+        default="convnet_encoder",
         help="The version of the dataset to be used for training",
     )
     args = parser.parse_args()

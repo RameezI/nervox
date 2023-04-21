@@ -6,7 +6,7 @@ Email: rameez.ismaeel@gmail.com
 
 from abc import ABC
 import tensorflow as tf
-from nervox.core import Protocol
+from nervox.transcoders import Protocol
 from tensorflow.python.framework import constant_op
 from tensorflow.python.distribute import reduce_util
 from tensorflow.python.distribute import combinations

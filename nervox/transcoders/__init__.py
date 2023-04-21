@@ -4,6 +4,5 @@ Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
 
-"""food101_tempo dataset."""
-
-from .food101_tempo import Food101Tempo
+from ..protocols.protocol import Protocol
+from ..objectives.objective import Objective

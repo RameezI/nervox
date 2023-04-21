@@ -3,7 +3,7 @@ from nervox.utils import capture_params
 from typing import Union, Callable
 
 
-class FeatureExtractorKeras(tf.keras.Model):
+class KerasEncoder(tf.keras.Model):
     
     def get_config(self):
         return getattr(self, 'params', dict())
@@ -25,7 +25,7 @@ class FeatureExtractorKeras(tf.keras.Model):
         return x
 
 
-class DenseNet121(FeatureExtractorKeras):
+class DenseNet121(KerasEncoder):
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
                  trainable: bool = True,
@@ -37,7 +37,7 @@ class DenseNet121(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class DenseNet169(FeatureExtractorKeras):
+class DenseNet169(KerasEncoder):
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
                  trainable: bool = True,
@@ -49,7 +49,7 @@ class DenseNet169(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class DenseNet201(FeatureExtractorKeras):
+class DenseNet201(KerasEncoder):
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
                  trainable: bool = True,
@@ -61,7 +61,7 @@ class DenseNet201(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class MobileNetV1(FeatureExtractorKeras):
+class MobileNetV1(KerasEncoder):
 
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
@@ -76,7 +76,7 @@ class MobileNetV1(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class MobileNetV2(FeatureExtractorKeras):
+class MobileNetV2(KerasEncoder):
     
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
@@ -90,7 +90,7 @@ class MobileNetV2(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class Xception(FeatureExtractorKeras):
+class Xception(KerasEncoder):
     
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
@@ -104,7 +104,7 @@ class Xception(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class InceptionV3(FeatureExtractorKeras):
+class InceptionV3(KerasEncoder):
     
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
@@ -118,7 +118,7 @@ class InceptionV3(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB0(FeatureExtractorKeras):
+class EfficientNetB0(KerasEncoder):
     
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
@@ -133,7 +133,7 @@ class EfficientNetB0(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB1(FeatureExtractorKeras):
+class EfficientNetB1(KerasEncoder):
     
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
@@ -147,7 +147,7 @@ class EfficientNetB1(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB2(FeatureExtractorKeras):
+class EfficientNetB2(KerasEncoder):
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
                  trainable: bool = True,
@@ -160,7 +160,7 @@ class EfficientNetB2(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB3(FeatureExtractorKeras):
+class EfficientNetB3(KerasEncoder):
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',
                  trainable: bool = True,
@@ -173,7 +173,7 @@ class EfficientNetB3(FeatureExtractorKeras):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB4(FeatureExtractorKeras):
+class EfficientNetB4(KerasEncoder):
     
     @capture_params
     def __init__(self, weights: Union[str, None] = 'imagenet',

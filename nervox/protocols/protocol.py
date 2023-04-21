@@ -11,12 +11,12 @@ from typing import Collection
 import tensorflow as tf
 from tensorflow import distribute
 from typing import Any, Dict, List, Union, final
-from nervox.core.objective import Objective
+from nervox.objectives.objective import Objective
 from nervox.data import DataStream
 from nervox.utils import snake_to_camel, Signatures
 
 # Aliases
-# CallbackList = tf.keras.callbacks.CallbackList
+CallbackList = tf.keras.callbacks.CallbackList
 
 
 class Protocol(tf.Module):
@@ -348,10 +348,12 @@ class Protocol(tf.Module):
     ) -> Dict[str, any]:
         """This is the evaluation loop for the protocol. It is responsible for evaluating the underlying modules.
         Args:
-            dataset (DataStream): A stream of data batches.
+            dataset (DataStream):               A stream of data batches.
             callbacks (CallbackList, optional): A list of callbacks to be . Defaults to CallbackList() an empty callback list.
-            run_eagerly (bool, optional): Whether to run the training loop eagerly(True) or in graph-mode (False). Defaults to False.
-            postfix (str, optional): Adds a suffix to each metric to identify them connected to validation/evaluation datastream. Defaults to "val".
+            run_eagerly (bool, optional):       Whether to run the training loop eagerly(True) or in graph-mode (False).
+                                                Defaults to False.
+            postfix (str, optional):            Adds a suffix to each metric to identify them connected to validation/evaluation
+                                                datastream. Defaults to "val".
 
         Returns:
             Dict[str, any]: A dictionary of metrics and progress variables at the end of the evaluation.
