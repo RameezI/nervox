@@ -25,7 +25,7 @@ class Exporter:
             protocol (Protocol):            A protocol instance that defines the training, evaluation and prediction logics.
             signatures (Signatures):        The input signatures for the training, evaluation and prediction step.
             ckpt_file (str):                The checkpoint file to be loaded. Defaults to None, the latest checkpoint file is loaded.
-            expect_partial (bool):          Whether to expect a partial loadind  of the variables from the checkpoints or not.
+            expect_partial (bool):          Whether to expect a partial loading  of the variables from the checkpoints or not.
                                             Defaults to False. raises an error if not all the variables are found in the checkpoint.
         """
         self.checkpoint_dir = checkpoint_dir

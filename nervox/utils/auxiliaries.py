@@ -20,10 +20,13 @@ import functools
 from functools import wraps
 from dataclasses import dataclass
 from pathlib import Path
+from functools import partial
+
 import matplotlib.pyplot as plt
 from typing import Union, Tuple, Callable, Dict, Any
 from enum import Enum
 
+from tensorflow.python.keras.utils import tf_utils
 
 class VerbosityLevel(Enum):
     KEEP_SILENT = "silent"
@@ -102,6 +105,26 @@ def base_parser(training_component=True, data_component=True) -> argparse.Argume
                         help='log level of the nervox')
     return parser
 # fmt:on
+
+
+def to_tensor_shape(input_shape):
+    """Converts a nested structure of tuples of int or None to TensorShapes
+    Valid objects to be converted are:
+    - tuples with elements of type int or None.
+    - ints
+    - None
+
+    Args:
+    input_shape: A nested structure of objects to be converted to TensorShapes.
+    
+    Returns:     
+    A nested structure of TensorShapes.  
+    
+    Raises:
+    ValueError: when the input tensor shape can't be converted.
+    """
+    to_tensor_shapes = partial(tf_utils.convert_shapes, to_tuples=False)
+    return to_tensor_shapes(input_shape)
 
 
 def compose(*functions: Callable) -> Callable:
@@ -210,19 +233,19 @@ def is_jsonable(x):
 
 
 def expand_params(config: Dict[str, Any]) -> Dict[str, Any]:
-    def _get_parmeterization(obj: Any) -> Dict[str, Any]:
+    def _get_parameterization(obj: Any) -> Dict[str, Any]:
         Parameterization = None
 
         if isinstance(obj, (tuple, list, set)):
             Parameterization = []
             for item in obj:
-                Parameterization.append(_get_parmeterization(item))
+                Parameterization.append(_get_parameterization(item))
             Parameterization = tuple(Parameterization)
 
         elif isinstance(obj, dict):
             Parameterization = {}
             for key, item in obj.items():
-                Parameterization[key] = _get_parmeterization(item)
+                Parameterization[key] = _get_parameterization(item)
             Parameterization = dict(Parameterization)
 
         else:
@@ -243,7 +266,7 @@ def expand_params(config: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(value, dict):
             expanded_config[key] = expand_params(value)
         elif not is_jsonable(value):
-            parameterization = _get_parmeterization(value)
+            parameterization = _get_parameterization(value)
             if parameterization is None:
                 raise ValueError(
                     f"{key}: Object `{type(value)}` is not JSON serializable"
@@ -258,6 +281,15 @@ def expand_params(config: Dict[str, Any]) -> Dict[str, Any]:
 def capture_params(*args_outer, **kwargs_outer):
     ignore_list = kwargs_outer.pop("ignore", [])
     apply_local_updates = kwargs_outer.pop("apply_local_updates", False)
+
+    def _set_attribute_value(obj, attribute_name, attribute_value):
+        if isinstance(obj, tf.Module):
+            restore_tracking = obj._setattr_tracking
+            obj._setattr_tracking = False
+            setattr(obj, attribute_name, attribute_value)
+            obj._setattr_tracking = restore_tracking
+        else:
+            setattr(obj, attribute_name, attribute_value)  
 
     def _validate_params_attribute_usage(params):
         if not isinstance(params, dict):
@@ -328,27 +360,14 @@ def capture_params(*args_outer, **kwargs_outer):
                         "Please make sure you are not using `params` for other purposes as it is reserved fo automatic parameterization."
                     )
 
-            # TODO: FIXIT#1: This try and except block is a temporary fix for the issue of `params` attribute not being set for the `Model` class.
-            #      This is a temporary fix and will be removed in future. The `params` attribute should be set for the `Model` class
-            #      however keras does not provide a way to do so wiuout first initializing the base class first. ::disappointed :(
-            try:
-                obj.params = obj.params if hasattr(obj, "params") else {}
+            # collect parameters from the function definition
+            params = {
+                param.name: param.default
+                for param in parameters
+                if param.name not in ignore_list
+            }
 
-                params = obj.params.get(
-                    func.__name__,
-                    {
-                        param.name: param.default
-                        for param in parameters
-                        if param.name not in ignore_list
-                    },
-                )
-            except RuntimeError:
-                params = {
-                    param.name: param.default
-                    for param in parameters
-                    if param.name not in ignore_list
-                }
-
+            # collect parameters from the function call
             params.update(
                 {key: value for key, value in kwargs.items() if key not in ignore_list}
             )
@@ -363,6 +382,7 @@ def capture_params(*args_outer, **kwargs_outer):
                 }
             )
 
+            # collect parameters from the class instance local context
             def profiler(frame, event, _):
                 if event == "return" and frame.f_back.f_code.co_name in [
                     "_wrapper_capture_params_"
@@ -379,9 +399,10 @@ def capture_params(*args_outer, **kwargs_outer):
                 sys.setprofile(profiler)
                 func(obj, *args, **kwargs)
 
-                # FIXIT#1: this is related to the same fix, see above.
-                # This is not needed once the attribute assignment above can be carried out for all classes.
-                obj.params = obj.params if hasattr(obj, "params") else {}
+                if not hasattr(obj, "params"):
+                    _set_attribute_value(obj, "params", {})
+
+                # fill in the params attribute
                 params = expand_params(params)
                 obj.params[func.__name__] = params
                 obj.params["__module__"] = type(obj).__module__

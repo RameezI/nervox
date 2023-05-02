@@ -2,6 +2,20 @@ import tensorflow as tf
 from nervox.utils import capture_params
 from typing import Union, Callable
 
+""" This module contains a set of pre-trained encoders for image feature extraction.
+These encoders are based on the Keras implementation of the models. They are wrapped
+as nervox `Module` object and can be used as any other module if the  nervox 
+framework. The encoders are trainable by default, ..
+
+
+Example:
+    >>> from nervox.modules import DenseNet121
+
+"""
+
+__all__ = ['DenseNet121', 'DenseNet169', 'DenseNet201', 'MobileNetV1', 'MobileNetV2', 'Xception',
+           'InceptionV3', 'EfficientNetB0', 'EfficientNetB1', 'EfficientNetB2', 'EfficientNetB3',
+           'EfficientNetB4']
 
 class KerasEncoder(tf.keras.Model):
     

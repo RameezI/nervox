@@ -2,6 +2,7 @@ import tensorflow as tf
 from typing import Optional
 from nervox.utils import capture_params
 
+__all__ = []
 
 class StackedDense(tf.keras.Model):
     def __init__(self, output_units_per_group: int, groups_count:int, **kwargs) -> None:

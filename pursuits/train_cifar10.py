@@ -6,15 +6,17 @@ Email: rameez.ismaeel@gmail.com
 
 import os
 import argparse
-
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-from nervox import Trainer
 
+from nervox import Trainer
 from nervox.objectives import Objective
 from nervox.protocols import Classification
 from nervox.utils import base_parser, VerbosityLevel
 
-from nervox.modules import GlobalAvgPoolDecoder
+from nervox.modules import Module
+
+
+
 
 from nervox.data import DataStream
 from nervox.data.transforms import Normalize, OneHotLabels
