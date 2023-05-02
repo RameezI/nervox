@@ -4,6 +4,7 @@ from nervox.data import Transform
 
 
 class TestTransform(unittest.TestCase):
+    
     class MockTransform(Transform):
         def __init__(self, param1, param2):
             self.param1 = param1
@@ -55,7 +56,7 @@ class TestTransform(unittest.TestCase):
         self.assertEqual(mt.param1, 1)
         self.assertEqual(mt.param2, 2)    
 
-    def test_illegal_decoration_synthax(self):
+    def test_illegal_decoration_syntax(self):
         with self.assertRaises(TypeError):
             @capture_params
             class MockTransform(Transform):

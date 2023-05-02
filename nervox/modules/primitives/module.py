@@ -136,10 +136,11 @@ class Module(tf.Module):
 
         def __wrapped_init(self, *args, **kwargs):
             # call the user's __init__ method
-
+            # we call the __init__ method of the base class already,
+            # so if the user forgets to call super().__init__ in their
+            # __init__ method, a default super().__init__ is in place.
             if cls.__base__ is Module:
                 super(cls, self).__init__()
-
             __user_init(self, *args, **kwargs)
 
         def __wrapped_build(self, *args, **kwargs):
@@ -158,11 +159,9 @@ class Module(tf.Module):
         module. The `name` attribute is useful for debugging and visualization purposes.
         The `trainable` attribute controls whether the variables of the module are trainable
         or not. The `dtype` attribute controls the data type of the variables of the module.
-        
-        The trainable can be set later using the `trainable` property, however the `name`
-        and `dtype` cannot be changed after the module is built.
 
         Args:
+
             trainable (bool, optional): Weather the module variables are trainable.
                                         Defaults to True.
 
@@ -170,12 +169,13 @@ class Module(tf.Module):
                                         to all variables created within the module. Default
                                         is None, which derives name from the top level class.
 
-            dtype (tf.DType, optional): The dtype of all the variables and numerical datastore
-                                        elements. Defaults to tf.float32.
+            dtype (tf.DType, optional): The dtype of the module computations.This is to enable
+                                        mixed precision training. Defaults to tf.float32.
 
         Raises:
             TypeError: When the `trainable` argument is not of type boolean.
             TypeError: When the `dtype` argument is not of type tf.DType.
+
         """
         super(Module, self).__init__(name=name)
 
@@ -190,7 +190,7 @@ class Module(tf.Module):
                 "Expected `trainable` argument to be of type boolean, "
                 f"but got: {trainable}: {type(trainable).__name__}"
             )
-        
+
         if not isinstance(dtype, tf.DType):
             raise TypeError(
                 "Expected `dtype` argument to be of type tf.DType, "
@@ -200,7 +200,7 @@ class Module(tf.Module):
         # private attributes
         self._trainable = trainable
         self._dtype = dtype
-        
+
         # attributes set lazily by `build`
         self._input_spec = None
         self._built = False
@@ -381,7 +381,7 @@ class Module(tf.Module):
 
         Now, if you try to build the module using an input shape that isn't rank 4
         (for instance, an input of shape `(2,)`, it will raise a nicely-formatted error:
-         TODO(rameez): Add exact error message
+         TODO (rameez): Add exact error message
         ```
         ValueError: Input 0 of layer conv2d is incompatible with the layer:
         expected ndim=4, found ndim=1. Full shape received: [2]
