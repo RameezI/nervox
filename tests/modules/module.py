@@ -53,16 +53,16 @@ class TestSimpleDenseModule(tf.test.TestCase):
         assert dense.dtype == tf.float32
 
         # test get_config method
-        config = dense.get_config()
+        config = dense.params['__init__']
         assert isinstance(config, dict)
-        assert config['units'] == 4
+        assert config == {'units': 4}
 
         # test from_config method
-        dense2 = SimpleDense.from_config(config)
+        dense2 = SimpleDense(**config)
         assert dense2.units == dense.units
 
-        # test call method
-        assert np.allclose(dense(x), dense.call(x))
+        # test compute method
+        assert np.allclose(dense(x), dense.compute(x))
 
 if __name__ == "__main__":
     tf.test.main()

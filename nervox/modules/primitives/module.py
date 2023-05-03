@@ -1,7 +1,8 @@
 import numpy as np
 import tensorflow as tf
-from typing import Union, Collection, Mapping, Optional
+from typing import Union, Collection, Mapping
 from nervox.utils import capture_params, to_tensor_shape
+from abc import abstractmethod
 
 
 class Module(tf.Module):
@@ -42,11 +43,10 @@ class Module(tf.Module):
                     the variable might not be updated during backpropogation.
 
       datastore:    List of non-trainable persistent states, these can be constants
-                    or variables, that are updated manually, or compounded data type.
-                    These are not listed in `variables` properties and thus are  not
-                    updated by optimizers.
+                    or variables that are updated manually. These are not listed in
+                    `variables` properties and thus are not updated by optimizers.
 
-      state:        List of all variables and the elements in the datastore.
+      state:        List of all variables and the tensors in the datastore.
                     The state of a composite module is the union of the state
                     of all of its constituents.
 
@@ -146,13 +146,20 @@ class Module(tf.Module):
         def __wrapped_build(self, *args, **kwargs):
             # call the user's build method
             __user_build(self, *args, **kwargs)
-            Module.build(*args, **kwargs)
+            if __user_build is not Module.build:
+                Module.build(self, *args, **kwargs)  # 1
+                # ¹if the user build is other than\
+                # the Module.build, also call the
+                # default Module.build
 
         cls.__init__ = __wrapped_init
         cls.build = __wrapped_build
 
     def __init__(
-        self, trainable: bool = True, name: str = None, dtype: tf.DType = tf.float32
+        self,
+        trainable: bool = True,
+        name: str = None,
+        dtype: tf.DType = tf.float32,
     ):
         """The __init__ method of the Module class. This is the base class for all modules.
         The __init__ method controls the `name`, `trainable` and `dtype` attributes of the
@@ -209,6 +216,13 @@ class Module(tf.Module):
         # the actual layer construction.
         self._name_scope_on_declaration = tf.get_current_name_scope()
 
+        self._datastore = []
+        self._variables = []
+
+        # private attributes that indicate if the caches are invalid
+        self._variables_cache_invalid = True
+        self._datastore_cache_invalid = True
+
     def build(self, input_shape: Union[tf.TensorShape, Collection[tf.TensorShape]]):
         """Create variables of the module.
 
@@ -238,13 +252,14 @@ class Module(tf.Module):
                 f"such instance but got:\n {input_shape}: {type(input_shape).__name__}"
             )
         self._built = True
+        self._datastore_cache_invalid = True
+        self._variables_cache_invalid = True
 
+    @abstractmethod
     def compute(
         self,
         inputs: Union[tf.Tensor, Collection[tf.Tensor]],
         /,
-        *,
-        training: Optional[bool] = None,
         **kwargs,
     ):
         """This is where the modules computations lives.
@@ -262,10 +277,6 @@ class Module(tf.Module):
                     position only  argument and the first argument passed to
                     any `compute` method.
 
-          training: An optional boolean indicating whether the requested computations
-                    are to be carried out in training mode or otherwise.By default,
-                    the `training` argument is set to `None`.
-
           **kwargs: Additional keyword arguments, to be implemented by the subclass.
 
         Returns:
@@ -277,8 +288,6 @@ class Module(tf.Module):
         self,
         inputs: Union[tf.Tensor, Collection[tf.Tensor]],
         /,
-        *,
-        training: Optional[bool] = None,
         **kwargs,
     ):
         """Wraps the forward `compute` method. This method is called when the module is invoked.
@@ -304,7 +313,7 @@ class Module(tf.Module):
         if not self._built:
             self._build(inputs)
 
-        outputs = self.compute(inputs, training=training, **kwargs)
+        outputs = self.compute(inputs, **kwargs)
         return outputs
 
     def _build(self, inputs):
@@ -324,12 +333,8 @@ class Module(tf.Module):
             except ValueError:
                 pass
 
-        # check for user defined build function
-        if Module.build is not self.build:
-            with tf.init_scope():
-                self.build(input_shapes)
-
-        Module.build(self, input_shapes)
+        with tf.init_scope():
+            self.build(input_shapes)
 
     @property
     def dtype(self):
@@ -344,6 +349,11 @@ class Module(tf.Module):
     @property
     def trainable(self):
         return self._trainable
+
+    @property
+    def built(self):
+        """Whether the module has been built."""
+        return self._built
 
     @trainable.setter
     def trainable(self, value):
@@ -363,8 +373,7 @@ class Module(tf.Module):
 
     @property
     def input_spec(self):
-        """`InputSpec` instance(s) describing the input format for this module.
-
+        """`InputSpec` instance describing the input format for the module.
         When creating a module subclass, one can set `self.input_spec` to
         enable the layer to run input compatibility checks during the build.
         For example, a `Conv2D` layer can only be built on a single input
@@ -378,10 +387,9 @@ class Module(tf.Module):
                                         dtype=dtype, name=name
                                         )
         ```
-
-        Now, if you try to build the module using an input shape that isn't rank 4
-        (for instance, an input of shape `(2,)`, it will raise a nicely-formatted error:
-         TODO (rameez): Add exact error message
+        Now, if you try to build the module using an input shape that isn't
+        rank 4 (for instance, an input of shape `(2,)`, it will raise a
+        nicely-formatted error:   TODO (rameez): Add exact error message
         ```
         ValueError: Input 0 of layer conv2d is incompatible with the layer:
         expected ndim=4, found ndim=1. Full shape received: [2]
@@ -393,33 +401,49 @@ class Module(tf.Module):
 
     @property
     def variables(self):
-        """List of all variables tracked by this module.
-        These variables are updated by optimizers during the training process.
-        TODO: Cache variables unless a state mutation is in sight.
-              When does state mutation happen?
-              - When a variable is added or removed, during build or first call?
-              - In which cases to recompute the flattened list of variables.
+        """List of all variables tracked by this module. When a module is
+        freshly built, the `variables` are  collected  through reflection.
+        All subsequent calls to this property will return  the cached value
+        of variables. However, if a state mutation is detected, for example
+        a call to build, the cache is invalidated and the list is recomputed.
 
         Returns:
           A list of trainable variables.
         """
         variables = []
-        if self.trainable and self.built:
+        if not self.trainable:
+            variables = []
+        elif self.built and self._variables_cache_invalid:
             variables = self.trainable_variables
+            self._variables = variables
+            self._variables_cache_invalid = False
+        else:
+            variables = self._variables
         return variables
 
     @property
     def datastore(self):
-        """List of all non trainable tensors tracked by this module.
-        TODO: Cache constants unless a state mutation is in sight.
-            When does state mutation happen?
-            - When constants are added or removed, during build or first call?
-            - In which cases to recompute the flattened list of constants.
+        """List of all non trainable tensors tracked by this module. When
+        freshly built, the persistent tensors are collected through reflection.
+        All subsequent calls to this property will return the cached value of
+        datastore. However, if a state mutation is detected, for example a call
+        to build, the cache is invalidated and the list is recomputed.
 
         Returns:
           A list of non-trainable variables.
         """
-        constants = []
-        if self.built:
-            constants = self.non_trainable_variables
-        return constants
+        datastore = []
+        if self.built and self._datastore_cache_invalid:
+            datastore = self.non_trainable_variables
+            self._datastore = datastore
+            self._datastore_cache_invalid = False
+        else:
+            datastore = self._datastore
+        return datastore
+
+    @property
+    def state(self):
+        """List of all trainable and non trainable tensors of this module.
+        When a key collision occurs between a variable and a datastore tensor,
+        the variable is given precedence."""
+        return self.variables + self.datastore
