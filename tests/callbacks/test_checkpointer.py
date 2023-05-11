@@ -1,3 +1,19 @@
+# Copyright(c) 2023 Rameez Ismail - All Rights Reserved
+# Author: Rameez Ismail
+# Email: rameez.ismaeel@gmail.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Copyright (C) 2021 Rameez Ismail - All Rights Reserved
 Author: Rameez Ismail
@@ -23,7 +39,7 @@ MODELS = ['convnet']
 OPTIMIZERS = [tf.keras.optimizers.SGD,
               ]
 
-DictModles= Dict[str, tf.keras.Model]
+ModelsDict= Dict[str, tf.keras.Model]
 Optimizer = tf.keras.optimizers.Optimizer
 
 
@@ -33,7 +49,6 @@ class TestProtocol(Classification):
         return (Optimizer)
         
         
-
 
 @combinations.generate(combinations.combine(model=MODELS))
 class TestCheckPointer(tf.test.TestCase):
@@ -47,7 +62,7 @@ class TestCheckPointer(tf.test.TestCase):
         self.dummy_train_stream = DataStream(dataset_train, batch_size=1)
     
     def create_trainer(self, model_type, logs_dir, run_id)\
-                       ->Tuple[os.PathLike, Tuple[int, DictModles, Optimizer]]:
+                       ->Tuple[os.PathLike, Tuple[int, ModelsDict, Optimizer]]:
         """
         Creates a trainer instance and spin it for a single epoch.
         """

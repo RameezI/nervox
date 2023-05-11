@@ -1,3 +1,19 @@
+# Copyright(c) 2023 Rameez Ismail - All Rights Reserved
+# Author: Rameez Ismail
+# Email: rameez.ismaeel@gmail.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Copyright (C) 2021 Rameez Ismail - All Rights Reserved
 Author: Rameez Ismail
@@ -15,10 +31,10 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def cliargs_parser() -> argparse.Namespace:
+def args_parser() -> argparse.Namespace:
     from nervox.utils import base_parser
 
-    """Returns options for the pursuit, which are configurable through commandline interface"""
+    """Returns options for the pursuit, which are configurable through command-line interface"""
     parser = argparse.ArgumentParser(parents=[base_parser()])
     parser.add_argument(
         "--dataset_version",
@@ -47,7 +63,7 @@ def objective_configurer() -> Objective:
     from nervox.transcoders import Objective
     from nervox.losses import CrossEntropy
     from nervox.metrics.classification import AccuracyScore, AveragingMode
-    from nervox.transforms import onehot_transform
+    from nervox.utils.transforms import onehot_transform
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     xentropy = CrossEntropy(transform=tf.nn.sigmoid)
@@ -64,7 +80,7 @@ class Cifar10(FlowSpec):
 
     @step
     def start(self):
-        parameters = vars(cliargs_parser())
+        parameters = vars(args_parser())
         for key, value in parameters.items():
             setattr(self, key, value)
         self.next(self.training)
@@ -76,7 +92,7 @@ class Cifar10(FlowSpec):
         from nervox.data.transforms import Normalize, OneHotLabels
         from nervox.data import DataStream
         from nervox.utils import VerbosityLevel
-        from nervox.modules.vision_decoders import GlobalAvgPoolDecoder
+        from nervox.modules.nets.vision_decoders  import GlobalAvgPoolDecoder
 
         # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         # os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"

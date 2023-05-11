@@ -1,3 +1,19 @@
+# Copyright(c) 2023 Rameez Ismail - All Rights Reserved
+# Author: Rameez Ismail
+# Email: rameez.ismaeel@gmail.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Copyright (C) 2021 Rameez Ismail - All Rights Reserved
 Author: Rameez Ismail
@@ -11,7 +27,6 @@ from typing import Union, Dict
 from datetime import datetime as dt
 from datetime import timedelta
 from enum import Enum
-
 
 class ModeProgressBar(Enum):
     DEFAULT = 0
@@ -43,6 +58,7 @@ class ProgressBar:
         self._eval_metrics: Union[str, None] = None
         self._stream_out: Union[str, None] = None
         
+
         self._step_count = 0
         self._train_samples_done = 0
         self._eval_samples_done = 0
@@ -66,7 +82,7 @@ class ProgressBar:
                                                             time_span=self._time_spent_eval)
         
         self._statement_ckpt: str = self._proto_ckpt.format(ckpt=self._checkpoint)
-    
+
     @property
     def mode(self) -> ModeProgressBar:
         return self._mode
@@ -221,7 +237,7 @@ class ProgressBar:
     @property
     def terminal_size(self):
         try:
-            terminal_size = os.get_terminal_size().columns - 1
+            terminal_size = os.get_terminal_size().columns
         except OSError:
             terminal_size = 256
         return terminal_size

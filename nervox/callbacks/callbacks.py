@@ -1,3 +1,19 @@
+# Copyright(c) 2023 Rameez Ismail - All Rights Reserved
+# Author: Rameez Ismail
+# Email: rameez.ismaeel@gmail.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Copyright (C) 2021 Rameez Ismail - All Rights Reserved
 Author: Rameez Ismail
@@ -12,133 +28,140 @@ from pathlib import Path
 from typing import Dict
 from nervox.protocols.protocol import Protocol
 from nervox.utils.progress_bar import ProgressBar
-from nervox.utils.types import Number
+from nervox.utils.types import Number, TensorLike
 from nervox.utils.auxiliaries import VerbosityLevel
 from datetime import datetime as dt
 from typing import Union
 import logging
 
+from nervox.callbacks import Callback
+from nervox.utils import VerbosityLevel
 logger = logging.getLogger(__name__)
 
-# Aliases
-callbacks = tf.keras.callbacks
+
+# class Callback(Callback):
+#     def __init__(self):
+#         super(Callback, self).__init__()
+#         self._run_dir: os.PathLike[str] = Path()
+#         self._protocol: Union[Protocol, None] = None
+#         self._writers: Union[None, Dict[str, tf.summary.SummaryWriter]] = None
+#         self._models: Dict[str, tf.keras.Model] = {}
+
+#     @property
+#     def models(self):
+#         """
+#         Returns: The models handled by the trainer; which are accessible to all callbacks
+#         """
+#         return self._models
+
+#     @models.setter
+#     def models(self, value: Dict[str, tf.keras.Model]):
+#         """
+#         Args:
+#             value: Set models accessible to all callback objects
+#         Returns:
+#         """
+#         self._models = value
+
+#     @property
+#     def writers(self) -> Union[None, Dict[str, tf.summary.SummaryWriter]]:
+#         """
+#         Returns a dictionary of summary writers
+#         """
+#         return self._writers
+
+#     @writers.setter
+#     def writers(self, value: Dict[str, tf.summary.SummaryWriter]):
+#         """
+#         Args:
+#             value:
+#         Returns:
+#         """
+#         self._writers = value
+
+#     @property
+#     def run_dir(self):
+#         return self._run_dir
+
+#     @run_dir.setter
+#     def run_dir(self, value: os.PathLike):
+#         self._run_dir = value
+
+#     @property
+#     def protocol(self):
+#         return self._protocol
+
+#     @protocol.setter
+#     def protocol(self, value: Protocol):
+#         self._protocol = value
 
 
-class Callback(callbacks.Callback):
-    def __init__(self):
-        super(Callback, self).__init__()
-        self._run_dir: os.PathLike[str] = Path()
-        self._protocol: Union[Protocol, None] = None
-        self._writers: Union[None, Dict[str, tf.summary.SummaryWriter]] = None
-        self._models: Dict[str, tf.keras.Model] = {}
+# class TensorBoardLogger(callbacks.Callback):
+#     def __init__(
+#         self,
+#         summaries_dir: Union[str, os.PathLike],
+#         frequency: int = 1,
+#         mode="batch",
+#         produce_graph: bool = True,
+#     ):
+#         super(TensorBoardLogger, self).__init__()
+#         if not isinstance(mode, str):
+#             raise TypeError
 
-    @property
-    def models(self):
-        """
-        Returns: The models handled by the trainer; which are accessible to all callbacks
-        """
-        return self._models
+#         if mode not in ["batch", "epoch"]:
+#             raise ValueError(
+#                 f"Value Error, while setting mode!\n"
+#                 f"The logger mode must be set to either `epoch` or `batch`\n"
+#                 f"Found: {mode}"
+#             )
 
-    @models.setter
-    def models(self, value: Dict[str, tf.keras.Model]):
-        """
-        Args:
-            value: Set models accessible to all callback objects
-        Returns:
-        """
-        self._models = value
+#         self.summaries_dir = summaries_dir
+#         self.produce_graph = produce_graph
+#         self.frequency: Union[int, str] = frequency
+#         self.current_step: int = 0
+#         self.mode = mode
 
-    @property
-    def writers(self) -> Union[None, Dict[str, tf.summary.SummaryWriter]]:
-        """
-        Returns a dictionary of summary writers
-        """
-        return self._writers
+#     def on_train_batch_end(self, batch, logs=None):
+#         writer = self.writers.get("train", tf.summary.create_noop_writer())
+#         if self.mode == "batch" and batch % self.frequency == 0:
+#             self.current_step = self.current_step + 1
+#             with writer.as_default(step=self.current_step):
+#                 for name, value in filter(
+#                     lambda x: x[0].endswith("train"), logs.items()
+#                 ):
+#                     tf.summary.scalar(name, value)
 
-    @writers.setter
-    def writers(self, value: Dict[str, tf.summary.SummaryWriter]):
-        """
-        Args:
-            value:
-        Returns:
-        """
-        self._writers = value
+#     def on_test_batch_end(self, batch, logs=None):
+#         writer = self.writers.get("test", tf.summary.create_noop_writer())
+#         if self.mode == "batch" and batch % self.frequency == 0:
+#             self.current_step = self.current_step + 1
+#             with writer.as_default(step=self.current_step):
+#                 for name, value in filter(lambda x: x[0].endswith("val"), logs.items()):
+#                     tf.summary.scalar(name, value)
 
-    @property
-    def run_dir(self):
-        return self._run_dir
+#     def on_epoch_end(self, epoch, logs=None):
+#         train_writer = self.writers.get("train", tf.summary.create_noop_writer())
+#         val_writer = self.writers.get("test", tf.summary.create_noop_writer())
+#         if self.mode == "epoch" and epoch % self.frequency == 0:
+#             self.current_step = self.current_step + 1
+#             # Train writer
+#             with train_writer.as_default(step=self.current_step):
+#                 for name, value in filter(
+#                     lambda x: x[0].endswith("train"), logs.items()
+#                 ):
+#                     tf.summary.scalar(name, value)
+#             # Validation writer
+#             with val_writer.as_default(step=self.current_step):
+#                 for name, value in filter(lambda x: x[0].endswith("val"), logs.items()):
+#                     tf.summary.scalar(name, value)
 
-    @run_dir.setter
-    def run_dir(self, value: os.PathLike):
-        self._run_dir = value
 
-    @property
-    def protocol(self):
-        return self._protocol
+# class CSVLogger(Callback):
+#     def __init__(self):
+#         super(CSVLogger, self).__init__()
 
-    @protocol.setter
-    def protocol(self, value: Protocol):
-        self._protocol = value
-
-
-class TensorBoardLogger(callbacks.Callback):
-    def __init__(
-        self,
-        summaries_dir: Union[str, os.PathLike],
-        frequency: int = 1,
-        mode="batch",
-        produce_graph: bool = True,
-    ):
-        super(TensorBoardLogger, self).__init__()
-        if not isinstance(mode, str):
-            raise TypeError
-
-        if mode not in ["batch", "epoch"]:
-            raise ValueError(
-                f"Value Error, while setting mode!\n"
-                f"The logger mode must be set to either `epoch` or `batch`\n"
-                f"Found: {mode}"
-            )
-
-        self.summaries_dir = summaries_dir
-        self.produce_graph = produce_graph
-        self.frequency: Union[int, str] = frequency
-        self.current_step: int = 0
-        self.mode = mode
-
-    def on_train_batch_end(self, batch, logs=None):
-        writer = self.writers.get("train", tf.summary.create_noop_writer())
-        if self.mode == "batch" and batch % self.frequency == 0:
-            self.current_step = self.current_step + 1
-            with writer.as_default(step=self.current_step):
-                for name, value in filter(
-                    lambda x: x[0].endswith("train"), logs.items()
-                ):
-                    tf.summary.scalar(name, value)
-
-    def on_test_batch_end(self, batch, logs=None):
-        writer = self.writers.get("test", tf.summary.create_noop_writer())
-        if self.mode == "batch" and batch % self.frequency == 0:
-            self.current_step = self.current_step + 1
-            with writer.as_default(step=self.current_step):
-                for name, value in filter(lambda x: x[0].endswith("val"), logs.items()):
-                    tf.summary.scalar(name, value)
-
-    def on_epoch_end(self, epoch, logs=None):
-        train_writer = self.writers.get("train", tf.summary.create_noop_writer())
-        val_writer = self.writers.get("test", tf.summary.create_noop_writer())
-        if self.mode == "epoch" and epoch % self.frequency == 0:
-            self.current_step = self.current_step + 1
-            # Train writer
-            with train_writer.as_default(step=self.current_step):
-                for name, value in filter(
-                    lambda x: x[0].endswith("train"), logs.items()
-                ):
-                    tf.summary.scalar(name, value)
-            # Validation writer
-            with val_writer.as_default(step=self.current_step):
-                for name, value in filter(lambda x: x[0].endswith("val"), logs.items()):
-                    tf.summary.scalar(name, value)
+#     def on_epoch_end(self, epoch, logs: Union[None, Dict[str, Number]] = None):
+#         pass
 
 
 class CheckPointer(Callback):
@@ -153,6 +176,11 @@ class CheckPointer(Callback):
         **kwargs,
     ):
         """
+        The check-pointer callback is used to save the model's weights and optimizer's state at the end of each epoch.
+        The check-pointer can be configured to keep the best model based on the monitored variable, or the last checkpoint.
+        It saves the model's weights and optimizer's state in a checkpoint file, which can be loaded using the
+        `tf.train.Checkpoint.restore` method.
+
         Args:
             checkpoint_dir:         The directory where the checkpoints are created.
             monitor:                The monitored variable
@@ -161,6 +189,8 @@ class CheckPointer(Callback):
             mode:                   How to determine the best checkpoint based on the monitored variable,
                                     accepts one of [`min`, `max`, `auto`]
             max_to_keep:            Maximum number of checkpoint to keep.
+
+        Keyword Args [optional]:
             progress_bar:           Optionally accepts a progress bar used to update the check-point statement.
 
         """
@@ -200,8 +230,21 @@ class CheckPointer(Callback):
 
         # Lazily create, at the start of the training, a checkpoint manager
         self.ckpt_manager = None
+    
+    def on_eval_end(self, metrics: Dict[str, TensorLike]):
+        if self.keep_best and metrics:
+            initial_best = metrics.get(self.monitor)
+            if initial_best is None:
+                logger.warning(
+                    f"\n{'Missing monitored-key':-^35}\n"
+                    f"The checkpointer callback did not find the monitored key in the initial logs,"
+                    f"\nif it is not found during training; will keep the {self.max_to_keep} most"
+                    f" recent points instead!\n"
+                )
+        self.best = metrics.get(self.monitor, self.best)
 
-    def on_train_begin(self, logs: Union[None, Dict[str, Number]] = None):
+
+    def on_train_begin(self):
         checkpoint = tf.train.Checkpoint(
             epoch=self._current_epoch,
             **self.models,
@@ -214,28 +257,16 @@ class CheckPointer(Callback):
             checkpoint_name="ckpt",
             max_to_keep=self.max_to_keep,
         )
-        if self.keep_best and logs:
-            initial_best = logs.get(self.monitor)
-            if initial_best is None:
-                print("", file=sys.stderr)
-                logger.warning(
-                    f"\n{'Missing monitored-key':-^35}\n"
-                    f"The checkpointer callback did not find the monitored key in the initial logs,"
-                    f"\nif it is not found during training; will keep the {self.max_to_keep} most"
-                    f" recent points instead!\n"
-                )
 
-        self.best = logs.get(self.monitor, self.best)
-
-    def on_epoch_end(self, epoch, logs: Union[None, Dict[str, Number]] = None):
+    def on_epoch_end(self, epoch, metrics: Dict[str, TensorLike]):
 
         self._current_epoch.assign(epoch)
 
-        if self.monitor not in logs:
+        if self.monitor not in metrics:
             self.keep_best = False
 
         if self.keep_best:
-            current = logs.get(self.monitor, None)
+            current = metrics.get(self.monitor, None)
             if self.monitor_op(current, self.best):
                 self.ckpt_manager.save()
                 if self._progress_bar is not None:
@@ -253,12 +284,7 @@ class CheckPointer(Callback):
                 print("checkpoint!") if not self.silent else None
 
 
-class CSVLogger(Callback):
-    def __init__(self):
-        super(CSVLogger, self).__init__()
 
-    def on_epoch_end(self, epoch, logs: Union[None, Dict[str, Number]] = None):
-        pass
 
 
 class ProgressParaphraser(Callback):
@@ -273,36 +299,33 @@ class ProgressParaphraser(Callback):
         self.eval_statement_only = False
         self.verbose = verbose
 
-    def on_train_begin(self, logs: Union[None, Dict[str, Number]] = None):
-        # get max epochs and set the progress bar accordingly
-        max_epochs = logs.pop("max_epochs", np.nan)
-        self._progress_bar.max_epochs = max_epochs
+    def on_train_begin(self):
+        # get max epochs and pass it to the progress bar
+        self._progress_bar.max_epochs = self.trainer.max_epoch
         print(f"Initiating Train/Validate Cycle: ", end="") if self.verbose not in [
             VerbosityLevel.KEEP_SILENT
         ] else None
 
-    def on_epoch_begin(self, epoch, logs: Union[None, Dict[str, Number]] = None):
+    def on_epoch_begin(self, epoch):
         # prepare statement
         self._progress_bar.reset_statements()
         self._progress_bar.epoch = epoch
-        self._progress_bar.train_samples = logs.get("samples/train", np.nan)
+        self._progress_bar.train_samples = self.trainer.train_samples_count
         self._progress_bar.epoch_start_time = dt.now()
         print(end="\n") if self.verbose not in [VerbosityLevel.KEEP_SILENT] else None
 
-    def on_test_begin(self, logs: Union[None, Dict[str, Number]] = None):
+    def on_eval_begin(self):
         # prepare statement
-        self._progress_bar.eval_samples = logs.get("samples/eval", np.nan)
+        self._progress_bar.eval_samples = self.trainer.eval_samples_count
         self._progress_bar.eval_start_time = dt.now()
 
-    def on_train_batch_end(
-        self, batch_index, logs: Union[None, Dict[str, Number]] = None
-    ):
+    def on_train_batch_end(self, step, metrics: Dict[str, TensorLike]):
         # update statement
-        if batch_index == 0:
+        if step == 0:
             self._progress_bar.time_after_first_batch = dt.now()
-        step_count = batch_index + 1
-        samples_done = logs.pop("samples_done", np.nan)
-        self._progress_bar.train_metrics = logs
+        step_count = step + 1
+        samples_done = metrics.pop("samples_done", np.nan)
+        self._progress_bar.train_metrics = metrics
         self._progress_bar.train_statement = {
             "step_count": step_count,
             "samples_done": samples_done,
@@ -311,15 +334,13 @@ class ProgressParaphraser(Callback):
             VerbosityLevel.UPDATE_AT_BATCH
         ] else None
 
-    def on_test_batch_end(
-        self, batch_index, logs: Union[None, Dict[str, Number]] = None
-    ):
+    def on_eval_batch_end(self, step, metrics: Dict[str, TensorLike]):
         # update statement
-        if batch_index == 0:
+        if step == 0:
             self._progress_bar.time_after_first_batch = dt.now()
-        step_count = batch_index + 1
-        samples_done = logs.pop("samples_done", np.nan)
-        self._progress_bar.eval_metrics = logs
+        step_count = step + 1
+        samples_done = metrics.pop("samples_done", np.nan)
+        self._progress_bar.eval_metrics = metrics
         self._progress_bar.eval_statement = {
             "step_count": step_count,
             "samples_done": samples_done,
@@ -328,15 +349,15 @@ class ProgressParaphraser(Callback):
             VerbosityLevel.UPDATE_AT_BATCH
         ] else None
 
-    def on_test_end(self, logs: Union[None, Dict[str, Number]] = None):
+    def on_eval_end(self, _):  
         print(f"\r{self._progress_bar}", end="") if self.verbose not in [
             VerbosityLevel.KEEP_SILENT
         ] else None
 
-    def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, _):
         self._progress_bar.epoch = epoch
-        self._progress_bar.train_samples = logs.get("samples/train", np.nan)
-        self._progress_bar.eval_samples = logs.get("samples/eval", np.nan)
+        self._progress_bar.train_samples = self.trainer.train_samples_count
+        self._progress_bar.eval_samples = self.trainer.eval_samples_count
         print(f"\r{self._progress_bar}", end="") if self.verbose not in [
             VerbosityLevel.KEEP_SILENT
         ] else None

@@ -1,11 +1,27 @@
+# Copyright(c) 2023 Rameez Ismail - All Rights Reserved
+# Author: Rameez Ismail
+# Email: rameez.ismaeel@gmail.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import numpy as np
 import tensorflow as tf
-from typing import Union, Collection, Mapping
+from typing import Union, Collection, Mapping, Optional
 from nervox.utils import capture_params, to_tensor_shape
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 
-class Module(tf.Module):
+class Module(tf.Module, ABC):
     """This is an abstract class from which all modules are inherited from.
 
     A Module is a callable object that takes as input one or more tensors and
@@ -28,9 +44,11 @@ class Module(tf.Module):
       trainable:    Boolean, whether the layer's variables should be trainable,
                     this applies recursively to all constituents of the module.
 
-      name:         String name of the layer.
+      name:         The name of the module this name scope is prepended to all
+                    variables created within the module. When None(default), which
+                    derives name from the top level class.
 
-      dtype:        The dtype of the modules variables.
+      dtype:        The dtype of the module variables.
 
     Attributes:
 
@@ -158,8 +176,8 @@ class Module(tf.Module):
     def __init__(
         self,
         trainable: bool = True,
-        name: str = None,
         dtype: tf.DType = tf.float32,
+        name: Optional[str] = None,
     ):
         """The __init__ method of the Module class. This is the base class for all modules.
         The __init__ method controls the `name`, `trainable` and `dtype` attributes of the
@@ -172,12 +190,12 @@ class Module(tf.Module):
             trainable (bool, optional): Weather the module variables are trainable.
                                         Defaults to True.
 
+            dtype (tf.DType):           The dtype of the module variables. 
+                                        Defaults to tf.float32.
+
             name (str, optional):       The name of the module this name scope is prepended
                                         to all variables created within the module. Default
                                         is None, which derives name from the top level class.
-
-            dtype (tf.DType, optional): The dtype of the module computations.This is to enable
-                                        mixed precision training. Defaults to tf.float32.
 
         Raises:
             TypeError: When the `trainable` argument is not of type boolean.
@@ -197,7 +215,7 @@ class Module(tf.Module):
                 "Expected `trainable` argument to be of type boolean, "
                 f"but got: {trainable}: {type(trainable).__name__}"
             )
-
+        
         if not isinstance(dtype, tf.DType):
             raise TypeError(
                 "Expected `dtype` argument to be of type tf.DType, "
@@ -223,12 +241,16 @@ class Module(tf.Module):
         self._variables_cache_invalid = True
         self._datastore_cache_invalid = True
 
-    def build(self, input_shape: Union[tf.TensorShape, Collection[tf.TensorShape]]):
+    def build(
+        self,
+        input_shape: Union[
+            tf.TensorShape, Collection[tf.TensorShape], Mapping[str, tf.TensorShape]
+        ]
+    ):
         """Create variables of the module.
-
         This is a method that implementers of subclasses of `nervox.Module` must override
-        if they need a state-creation. It is invoked, when not yet built, automatically at
-        the very first invocation of `compute()`.
+        if they need a state-creation. It is invoked automatically, if not already built,
+        at the very first invocation of `compute()`.
 
         Args:
           input_shape: Instance of `TensorShape`, or a collection of such instances
