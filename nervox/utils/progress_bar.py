@@ -28,6 +28,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 from enum import Enum
 
+
 class ModeProgressBar(Enum):
     DEFAULT = 0
     EVAL_ONLY = 1

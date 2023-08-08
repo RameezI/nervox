@@ -42,7 +42,7 @@ def get_license_header(
 # Copyright © 2023 Rameez Ismail - All Rights Reserved
 # Licensed under the {license};
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# You may obtain a copy of the License at:
 #
 #   {license_url}
 #

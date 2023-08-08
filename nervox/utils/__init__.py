@@ -20,6 +20,7 @@ Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
 
+from .capture import *
 from .auxiliaries import *
-from .progress_bar import ProgressBar, ModeProgressBar
+from .progress_bar import *
 from .transforms import *

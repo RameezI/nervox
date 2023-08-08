@@ -20,5 +20,5 @@ Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
 
-from .data_stream import DataStream
-from .transform import Transform
+from .datastream import DataStream
+from .transforms import Transform

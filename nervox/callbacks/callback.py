@@ -32,7 +32,6 @@ class Callback:
     training protocol.
     """
 
-
     @final
     def setup(self, trainer: Trainer, protocol: Protocol):
         """Links the callback object to the trainer and protocol.

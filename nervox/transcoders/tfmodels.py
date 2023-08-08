@@ -14,46 +14,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Copyright (C) 2021 Rameez Ismail - All Rights Reserved
-Author: Rameez Ismail
-Email: rameez.ismaeel@gmail.com
-"""
-
 import os
 import argparse
+import numpy as np
 import tensorflow as tf
-
 from nervox.utils import auxiliaries as  aux
 
-# def get_data_generator(params):
-#     def get_metadata(dataset_opts):
-#         return dataset_opts['metadata']
-#
-#     datasets_pkg = params['trainer']['datasets_pkg']
-#     dataset_name = params['trainer']['dataset_name']
-#     dataset_conf = params['dataset']
-#     dataset = __import__('{}.{}'.format(datasets_pkg, dataset_name), fromlist=[dataset_name]).Dataset
-#
-#     # test if we can access to dataset, otherwise use the default download directory to download and prepare the dataset
-#     dataset_exists = os.path.exists(dataset_conf['datasets_dir'])
-#     dataset_conf.update({'datasets_dir': dataset_conf['datasets_dir'] if dataset_exists else None})
-#     dataset_conf.update({'metadata': get_metadata(dataset_conf)})
-#     ds = dataset(**dataset_conf)
-#
-#     def image_gen_tfrt():
-#         image = np.random.normal(size=(1, 256, 256, 3)).astype(np.float32),
-#         yield image
-#
-#     def image_gen_tflite():
-#         ds_train, _ = ds(batch_size=1)
-#         for i, (images, labels) in enumerate(ds_train):
-#             yield [images]
-#
-#     return image_gen_tfrt
+#TODO: NEEDS FIXING AND REVIEW
+def get_data_generator(params):
+    def get_metadata(dataset_opts):
+        return dataset_opts['metadata']
+
+    datasets_pkg = params['trainer']['datasets_pkg']
+    dataset_name = params['trainer']['dataset_name']
+    dataset_conf = params['dataset']
+    dataset = __import__('{}.{}'.format(datasets_pkg, dataset_name), fromlist=[dataset_name]).Dataset
+
+    # test if we can access to dataset, otherwise use the default download directory to download and prepare the dataset
+    dataset_exists = os.path.exists(dataset_conf['datasets_dir'])
+    dataset_conf.update({'datasets_dir': dataset_conf['datasets_dir'] if dataset_exists else None})
+    dataset_conf.update({'metadata': get_metadata(dataset_conf)})
+    ds = dataset(**dataset_conf)
+
+    def image_gen_tfrt():
+        image = np.random.normal(size=(1, 256, 256, 3)).astype(np.float32),
+        yield image
+
+    def image_gen_tflite():
+        ds_train, _ = ds(batch_size=1)
+        for i, (images, labels) in enumerate(ds_train):
+            yield [images]
+
+    return image_gen_tfrt
 
 
-def convert_to_tfrt(run_dir, quantization_modes=('JIT_FLOAT16',)):
+def to_tfrt(run_dir, quantization_modes=('JIT_FLOAT16',)):
     valid_quantization_modes = {'JIT_FLOAT16', 'JIT_FLOAT32', 'INT8', 'FLOAT16', 'FLOAT32'}
     if quantization_modes is None:
         quantization_modes = valid_quantization_modes
@@ -93,7 +88,7 @@ def convert_to_tfrt(run_dir, quantization_modes=('JIT_FLOAT16',)):
                                                                use_calibration=True)
             converter = tf.experimental.tensorrt.Converter(input_saved_model_dir=export_dir,
                                                            conversion_params=params)
-            converter.convert(callibration_input_fn=data_generator)
+            converter.convert(calibration_input_fn=data_generator)
             converter.save(os.path.join(export_dir, 'tensorRT', 'int8'))
        
         if {'FLOAT16'}.issubset(quantization_modes):
@@ -186,4 +181,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     exp_run_dir = os.path.join(args.logs_dir, args.name, args.run_id)
-    convert_to_tfrt(exp_run_dir)
+    to_tfrt(exp_run_dir)

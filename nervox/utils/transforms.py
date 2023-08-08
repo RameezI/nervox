@@ -17,6 +17,7 @@
 import tensorflow as tf
 from nervox.utils.types import TensorLike
 
+
 def onehot_transform(x: TensorLike, axis=-1) -> tf.Tensor:
     """
     This function transforms a tensor into a onehot encoding.

@@ -18,12 +18,15 @@ import tensorflow as tf
 from nervox.utils import capture_params
 
 
-class TestCaptureParams(tf.test.TestCase):
-    def test_capture_params_no_outer_parms(self):
+class TestMethodsCapture(tf.test.TestCase):
+
+    def test_capture_params_no_outer_params(self):
         class MyClass:
             @capture_params
             def my_method(self, arg1, arg2, arg3="default"):
-                pass
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
 
         my_obj = MyClass()
         my_obj.my_method(arg1="value1", arg2="value2")
@@ -35,8 +38,10 @@ class TestCaptureParams(tf.test.TestCase):
         class MyClass:
             @capture_params(ignore=["arg1"])
             def my_method(self, arg1, arg2, arg3="default"):
-                pass
-
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
+        
         my_obj = MyClass()
         my_obj.my_method(arg1="ignore", arg2="value2")
 
@@ -47,7 +52,9 @@ class TestCaptureParams(tf.test.TestCase):
         class MyClass:
             @capture_params(ignore=["arg1"])
             def my_method(self, arg1, arg2, arg3="default"):
-                pass
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
 
         my_obj = MyClass()
         my_obj.my_method("ignore", "value2")
@@ -59,6 +66,9 @@ class TestCaptureParams(tf.test.TestCase):
             @capture_params(apply_local_updates=True)
             def my_method(self, arg1, arg2, arg3="default"):
                 arg1 = "new value"
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
 
         my_obj = MyClass()
         my_obj.my_method("value1", "value2")
@@ -72,6 +82,9 @@ class TestCaptureParams(tf.test.TestCase):
             @capture_params(apply_local_updates=True)
             def my_method(self, arg1, arg2, arg3="default"):
                 arg1 = "new value"
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
 
         my_obj = MyClass()
 
@@ -90,6 +103,9 @@ class TestCaptureParams(tf.test.TestCase):
             @capture_params(apply_local_updates=True)
             def my_method(self, arg1, arg2, *, arg3="default"):
                 arg3 = "updated_arg3"
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
 
         my_obj = MyClass()
         my_obj.my_method("value1", "value2", arg3="updated_arg3")
@@ -104,6 +120,10 @@ class TestCaptureParams(tf.test.TestCase):
             @capture_params(apply_local_updates=True)
             def my_method(self, arg1, arg2, arg3="default", **kwargs):
                 arg3 = "updated_arg3"
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
+                self.kwargs = kwargs
 
         my_obj = MyClass()
         my_obj.my_method("value1", "value2", arg3="updated_arg3", arg4="new_kwarg4")
@@ -119,26 +139,34 @@ class TestCaptureParams(tf.test.TestCase):
         )
 
     def test_capture_params_positional_only(self):
-        with self.assertRaises(TypeError):
 
-            class MyClass:
-                @capture_params
-                def my_method(self, arg1, /, arg2, *, arg3="default"):
-                    pass
+        class MyClass:
+            @capture_params
+            def my_method(self, arg1, /, arg2, *, arg3="default"):
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
 
-            my_obj = MyClass()
-            my_obj.my_method("value1", "value2", arg3="updated_arg3")
+        my_obj = MyClass()
+        my_obj.my_method("value1", "value2", arg3="updated_arg3")
+        self.assertEqual(my_obj.params["my_method"],
+                          {"args_positional": ["value1"],
+                            "arg2": "value2", "arg3": "updated_arg3"})
 
     def test_capture_params_var_positional(self):
-        with self.assertRaises(TypeError):
+        class MyClass:
+            @capture_params
+            def my_method(self, *args, arg1, arg2, arg3="default"):
+                self.vars = args
+                self.arg1 = arg1
+                self.arg2 = arg2
+                self.arg3 = arg3
 
-            class MyClass:
-                @capture_params
-                def my_method(self, *args, arg1, arg2, arg3="default"):
-                    pass
-
-            my_obj = MyClass()
-            my_obj.my_method("value1", "value2", arg3="updated_arg3")
+        my_obj = MyClass()
+        my_obj.my_method("value1", "value2", arg1=1, arg2=2, arg3="updated_arg3")
+        self.assertEqual(my_obj.params["my_method"],
+                            {"args_positional": ["value1", "value2"],
+                             "arg1": 1, "arg2": 2, "arg3": "updated_arg3"})
 
 
 if __name__ == "__main__":

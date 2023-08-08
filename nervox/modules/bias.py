@@ -1,7 +1,7 @@
 # Copyright © 2023 Rameez Ismail - All Rights Reserved
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# You may obtain a copy of the License at:
 #
 #    http://www.apache.org/licenses/LICENSE-2.0
 #
@@ -74,8 +74,8 @@ class Bias(Module):
     def __init__(
         self,
         dims: Optional[Sequence[int]] = None,
-        initializer: Optional[initializers.Initializer] = None, #TODO: make this serializable
-        dtype: Optional[tf.DType] = tf.float32, #TODO: make this serializable
+        initializer: Optional[initializers.Initializer] = None,
+        dtype: Optional[tf.DType] = tf.float32,
         name: Optional[str] = None,
     ):
         """Constructs a `Bias` module that supports broadcasting.
@@ -174,7 +174,8 @@ def calculate_bias_shape(input_shape: types.ShapeLike, bias_dims: Sequence[int])
 
 if __name__ == "__main__":
     N, H, W, C = 1, 2, 3, 4
-    x = tf.random.normal([N, H, W, C], dtype=tf.float16)
+    x = tf.random.normal([N, H, W, C], dtype=tf.float32)
     bias = Bias(dims=[])
     bias_output = bias(x)
     print(bias_output)
+    print(bias.params)

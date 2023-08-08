@@ -250,11 +250,11 @@ class Module(tf.Module, ABC):
         """Create variables of the module.
         This is a method that implementers of subclasses of `nervox.Module` must override
         if they need a state-creation. It is invoked automatically, if not already built,
-        at the very first invocation of `compute()`.
+        at the first invocation of `compute()`.
 
         Args:
-          input_shape: Instance of `TensorShape`, or a collection of such instances
-            depending upon the input signature of the module.
+          input_shape:  Instance of `TensorShape`, or a collection of such instances
+                        depending upon the input signature of the module.
         """
         if isinstance(input_shape, tf.TensorShape):
             self._input_spec = tf.TensorSpec(shape=input_shape, dtype=self.dtype)

@@ -14,11 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Copyright (C) 2021 Rameez Ismail - All Rights Reserved
-Author: Rameez Ismail
-Email: rameez.ismaeel@gmail.com
-"""
 
 import os
 import uuid

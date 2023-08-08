@@ -1,7 +1,4 @@
-# Copyright(c) 2023 Rameez Ismail - All Rights Reserved
-# Author: Rameez Ismail
-# Email: rameez.ismaeel@gmail.com
-#
+# Copyright © 2023 Rameez Ismail - All Rights Reserved
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,11 +10,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Author(s): Rameez Ismail
+# Email(s):  rameez.ismaeel@gmail.com
+
 
 """
-Copyright (C) 2021 Rameez Ismail - All Rights Reserved
-Author: Rameez Ismail
-Email: rameez.ismaeel@gmail.com
+This module contains all auxiliary functions for the Nervox framework.
 """
 
 import sys
@@ -26,6 +25,7 @@ import io
 import re
 import json
 import datetime
+import logging
 import contextlib
 import inspect
 import argparse
@@ -37,21 +37,32 @@ from functools import wraps
 from dataclasses import dataclass
 from pathlib import Path
 from functools import partial
-
+import tensorflow as tf
+from dataclasses import dataclass
 import matplotlib.pyplot as plt
 from typing import Union, Tuple, Callable, Dict, Any
+from types import FunctionType
 from enum import Enum
 
+from nervox.utils.types import *
 from tensorflow.python.keras.utils import tf_utils
+from .serializers import SerializerRegistry
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
+_SPATIAL_CHANNELS_FIRST = re.compile("^NC[^C]*$")
+_SPATIAL_CHANNELS_LAST = re.compile("^N[^C]*C$")
+_SEQUENTIAL = re.compile("^((BT)|(TB))[^D]*D$")
+
 
 class VerbosityLevel(Enum):
     KEEP_SILENT = "silent"
     UPDATE_AT_EPOCH = "epoch"
     UPDATE_AT_BATCH = "batch"
-
-
-import tensorflow as tf
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -82,11 +93,36 @@ class ComputeComplexity:
 
 # fmt:off
 def base_parser(training_component=True, data_component=True) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="command line arguments for the nervox experiments",
+    """
+    General cmd-line args useful when working with experiments produced by nervox
+    Using these standard args make it easier to write consistent launch files. Users
+    are encouraged to use this base parser and add their own arguments on top of it.
+    This will ensure that all experiments have a consistent set of arguments and
+    that they can be launched in a consistent manner.
+
+    Example:
+        ```
+        import argparse
+        parser =  argparse.ArgumentParser(parents=[base_parser()])
+        parser.add_argument('--my_new_arg', required=True, type=int, default=32,
+                            help='This is a new argument that I want to add to my experiment')
+        args = parser.parse_args()
+        print(args)
+        ```
+
+    Args:
+        training_component (bool, optional): Weather to include options relevant for training.
+                                             Defaults to True.                                             
+        data_component (bool, optional):     Weather to include options relevant for data streams.
+                                             Defaults to True.
+
+    Returns:
+        argparse.ArgumentParser: _parser     A CLI parser with the common arguments.
+    """
+    parser = argparse.ArgumentParser(description = 
+                                     "command line arguments for the nervox experiments",
                                      add_help=False)
     
-    # General cmd-line args useful when working with experiments produced by nervox
-    # Using these standard args make it easier to write consistent launch files.
     parser.add_argument('--logs_dir', required=False, type=str,
                         default=str(Path(Path.home(), 'tensorflow_logs')),
                         help='path to the top level tensorflow_log directory')
@@ -102,7 +138,6 @@ def base_parser(training_component=True, data_component=True) -> argparse.Argume
                             default=str(Path(Path.home(), 'tensorflow_datasets')),
                             help='path to the directory that contains tensorflow datasets')
     
-
     # Add common arguments normally needed by the nervox trainer component. 
     if training_component:
         parser.add_argument('--max_epochs', required=False, type=int, default=100,
@@ -123,6 +158,38 @@ def base_parser(training_component=True, data_component=True) -> argparse.Argume
 # fmt:on
 
 
+def get_channel_index(data_format: str) -> int:
+    """
+    Returns the channel index for a given data format.
+
+    Args:
+        data_format (str): The data format to get the channel index from. Valid data formats are
+                           spatial (e.g.`NCHW`), sequential (e.g. `BTHWD`), `channels_first` and
+                           `channels_last`.
+    Returns:
+        int:    The channel index as an int - either 1 or -1.
+
+    Raises:
+        ValueError: When the data format is unrecognized.
+    """
+
+    if data_format == "channels_first":
+        return 1
+    if data_format == "channels_last":
+        return -1
+    if _SPATIAL_CHANNELS_FIRST.match(data_format):
+        return 1
+    if _SPATIAL_CHANNELS_LAST.match(data_format):
+        return -1
+    if _SEQUENTIAL.match(data_format):
+        return -1
+    raise ValueError(
+        "Unable to extract channel information from '{}'. Valid data formats are "
+        "spatial (e.g.`NCHW`), sequential (e.g. `BTHWD`), `channels_first` and "
+        "`channels_last`).".format(data_format)
+    )
+
+
 def to_tensor_shape(input_shape):
     """Converts a nested structure of tuples of int or None to TensorShapes
     Valid objects to be converted are:
@@ -132,10 +199,10 @@ def to_tensor_shape(input_shape):
 
     Args:
     input_shape: A nested structure of objects to be converted to TensorShapes.
-    
-    Returns:     
-    A nested structure of TensorShapes.  
-    
+
+    Returns:
+    A nested structure of TensorShapes.
+
     Raises:
     ValueError: when the input tensor shape can't be converted.
     """
@@ -204,237 +271,6 @@ def get_io_specs_tflite(export_dir, name="model.tflite"):
     return io_specs_tflite
 
 
-def serialize_to_json(self):
-    def default_serializer(obj):
-        _config = getattr(obj, "params", None)
-
-        if _config is None:
-            raise ValueError(
-                "Serialization to JSON failed!\n"
-                " The object does not have `params` attribute set, this is required attribute "
-                "which must provide the minimum config to reconstruct the object. If you are\n"
-                " serializing a custom class object, do not forgot to decorate your class "
-                "`__init__` method with `capture_params` decorator, which can create `params`\n"
-                " attribute for your object automatically. You can also supply the config"
-                " manually by setting the `params` attribute of your object.\n"
-                f" The concerned class is : `{type(obj).__name__}`"
-            )
-
-        _config.ClassificationMetricUpdater({"class_name": type(obj).__name__})
-        return _config
-
-    json_serialization = ""
-    assert isinstance(
-        self, object
-    ), "The serialization candidate must be an instance of a class"
-    try:
-        json_serialization = json.dumps(
-            self, default=default_serializer, sort_keys=True, indent=4
-        )
-    except ValueError as e:
-        raise ValueError(
-            "\n\nSerialization Failure!:\n"
-            f"Failed while attempting to serialize an object of class `{type(self).__name__}`\n"
-            f" {str(e)}"
-        )
-    return json_serialization
-
-
-def is_jsonable(x):
-    try:
-        json.dumps(x)
-        return True
-    except (TypeError, OverflowError):
-        return False
-
-
-def expand_params(config: Dict[str, Any]) -> Dict[str, Any]:
-    def _get_parameterization(obj: Any) -> Dict[str, Any]:
-        Parameterization = None
-
-        if isinstance(obj, (tuple, list, set)):
-            Parameterization = []
-            for item in obj:
-                Parameterization.append(_get_parameterization(item))
-            Parameterization = tuple(Parameterization)
-
-        elif isinstance(obj, dict):
-            Parameterization = {}
-            for key, item in obj.items():
-                Parameterization[key] = _get_parameterization(item)
-            Parameterization = dict(Parameterization)
-
-        else:
-            if hasattr(obj, "params") and hasattr(obj, "__init__"):
-                Parameterization = obj.params
-
-            if not is_jsonable(Parameterization):
-                raise ValueError(
-                    f"Cannot acquire JSON serializable Parameterization of Object:\n"
-                    f"module: `{type(obj).__module__}`\n"
-                    f"class: `{type(obj).__name__}\n"
-                )
-
-        return Parameterization
-
-    expanded_config = {}
-    for key, value in config.items():
-        if isinstance(value, dict):
-            expanded_config[key] = expand_params(value)
-        elif not is_jsonable(value):
-            parameterization = _get_parameterization(value)
-            if parameterization is None:
-                raise ValueError(
-                    f"{key}: Object `{type(value)}` is not JSON serializable"
-                    " and does not provide parameterization."
-                )
-        else:
-            expanded_config[key] = value
-
-    return expanded_config
-
-
-def capture_params(*args_outer, **kwargs_outer):
-    ignore_list = kwargs_outer.pop("ignore", [])
-    apply_local_updates = kwargs_outer.pop("apply_local_updates", False)
-
-    def _set_attribute_value(obj, attribute_name, attribute_value):
-        if isinstance(obj, tf.Module):
-            restore_tracking = obj._setattr_tracking
-            obj._setattr_tracking = False
-            setattr(obj, attribute_name, attribute_value)
-            obj._setattr_tracking = restore_tracking
-        else:
-            setattr(obj, attribute_name, attribute_value)  
-
-    def _validate_params_attribute_usage(params):
-        if not isinstance(params, dict):
-            raise TypeError(
-                "The `params` attribute must be a dictionary of type `Dict[str, JSONSerializable]`"
-            )
-
-        elif ["__class__", "__module__"] not in list(params.keys()):
-            raise ValueError(
-                "The `params` attribute must be a dictionary of type `Dict[str, JSONSerializable]`"
-                " and must contain `__class__` and `__module__` keys."
-            )
-
-        else:
-            for key, value in params.items():
-                if not isinstance(key, str):
-                    raise TypeError(
-                        "The `params` attribute must be a dictionary of type `Dict[str, JSONSerializable]`\n"
-                        f"keys must be of type `str` but received: {type(key).__name__}"
-                    )
-                if not is_jsonable(value):
-                    raise TypeError(
-                        "The `params` attribute must be a dictionary of type `Dict[str, Any]`\n"
-                        f"values must be JSON serializable but received: {type(value).__name__}"
-                    )
-
-    def _capture_params(func):
-        if (not inspect.isfunction(func)) or inspect.isclass(func):
-            raise TypeError(
-                "The `capture_params` decorator must be used on a non-static method of a class or functor:\n"
-                "Make sure that a `method` is decorated and not the class itself.\n"
-            )
-
-        @wraps(_capture_params)
-        def _wrapper_capture_params_(obj, *args, **kwargs):
-            _profile = sys.getprofile()
-            parameters = [
-                param
-                for param in inspect.signature(func).parameters.values()
-                if param.kind not in [inspect.Parameter.VAR_KEYWORD]
-            ][1:]
-
-            if not all(
-                [
-                    param.kind
-                    not in [
-                        inspect.Parameter.POSITIONAL_ONLY,
-                        inspect.Parameter.VAR_POSITIONAL,
-                    ]
-                    for param in parameters
-                ]
-            ):
-                raise TypeError(
-                    "The use of 'POSITIONAL_ONLY' and 'VAR_POSITIONAL' arguments"
-                    " is currently NOT supported by the capture function."
-                    " This feature is likely to be not supported in future as well, to promote transparency."
-                    " Please use positional arguments or keywords only arguments for the (decorated) function definition!"
-                )
-
-            if hasattr(obj, "params"):                
-                try:
-                    _validate_params_attribute_usage(obj.params)
-
-                except ValueError:
-                    raise AttributeError(
-                        f"Automatic parameterization is setup for your class `{type(obj).__name__}, this means that `params`\n"
-                        "attribute is set automatically for your class instance. However, an illegal use of the attribute is detected.\n."
-                        "Please make sure you are not using `params` for other purposes as it is reserved fo automatic parameterization."
-                    )
-
-            # collect parameters from the function definition
-            params = {
-                param.name: param.default
-                for param in parameters
-                if param.name not in ignore_list
-            }
-
-            # collect parameters from the function call
-            params.update(
-                {key: value for key, value in kwargs.items() if key not in ignore_list}
-            )
-            positional_params = list(inspect.signature(func).parameters.values())[
-                1 : len(args) + 1
-            ]
-            params.update(
-                {
-                    param.name: value
-                    for param, value in zip(positional_params, args)
-                    if param.name not in ignore_list
-                }
-            )
-
-            # collect parameters from the class instance local context
-            def profiler(frame, event, _):
-                if event == "return" and frame.f_back.f_code.co_name in [
-                    "_wrapper_capture_params_"
-                ]:
-                    frame_locals = frame.f_locals
-                    updates = {
-                        key: value
-                        for key, value in frame_locals.items()
-                        if key in params
-                    }
-                    params.update(updates) if apply_local_updates else None
-
-            try:
-                sys.setprofile(profiler)
-                func(obj, *args, **kwargs)
-
-                if not hasattr(obj, "params"):
-                    _set_attribute_value(obj, "params", {})
-
-                # fill in the params attribute
-                params = expand_params(params)
-                obj.params[func.__name__] = params
-                obj.params["__module__"] = type(obj).__module__
-                obj.params["__class__"] = type(obj).__name__
-
-            finally:
-                sys.setprofile(_profile)
-
-        return _wrapper_capture_params_
-
-    if args_outer and callable(args_outer[0]):
-        return _capture_params(args_outer[0])
-    else:
-        return _capture_params
-
-
 def assign_lazy_configs(config, locals_dict=None):
     def evaluate(_value_literals):
         value = eval(_value_literals, {"__builtins__": None}, locals_dict)
@@ -472,8 +308,8 @@ def get_urid():
 
 
 def plot_to_tf_image(figure):
-    """Converts the matplotlib plot specified by 'figure' to a PNG image and
-    returns it. The supplied figure is closed and inaccessible after this call."""
+    """Converts the matplotlib plot specified by 'figure' to a PNG image and returns it. The
+    supplied figure is closed and inaccessible after this call."""
     buf = io.BytesIO()
     plt.savefig(buf, format="png", dpi=300)
     plt.close(figure)
@@ -488,10 +324,14 @@ def plot_to_tf_image(figure):
 def redirect_stdout(target: Union[os.PathLike, bytes, io.StringIO]):
     """Redirects the stdout to a file or a StringIO object
     Args:
-        target (Union[os.PathLike, bytes, io.StringIO]): The target to redirect the stdout to, this can be a file path, a buffer or a StringIO object.
+        target (Union[os.PathLike, bytes, io.StringIO]): The target to redirect the stdout to,
+                                                         this can be a file path, a buffer or
+                                                         a StringIO object.
     Yields:
-        target: the target object is returned from the context managerm, this can be a file path, a buffer or a StringIO object.
-        The redirection is done when you entered the context manager and is reverted back to the original stdout after the context manager is exited.
+        target:     The target object is returned from the context manager, this can be a file
+                    path, buffer or a StringIO object. The redirection happens when you enter
+                    the context and is reverted back to the original stdout after the context
+                    is exited.
     """
     sys.stdout.flush()
     std_out = sys.stdout
@@ -508,10 +348,3 @@ def redirect_stdout(target: Union[os.PathLike, bytes, io.StringIO]):
         sys.stdout.flush()
         sys.stdout = std_out
         log_file.close() if log_file else None
-
-
-if __name__ == "__main__":
-    logs_dir = os.path.expanduser(os.path.join("~", "tensorflow_logs"))
-    experiment_dir = os.path.join(logs_dir, "cifar10", "convnet_small", "20200413-1145")
-    io_specs = get_io_specs_tflite(os.path.join(experiment_dir, "export"))
-    print(io_specs["input"], "\n", io_specs["output"])

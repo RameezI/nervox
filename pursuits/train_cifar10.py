@@ -14,12 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Copyright (C) 2021 Rameez Ismail - All Rights Reserved
-Author: Rameez Ismail
-Email: rameez.ismaeel@gmail.com
-"""
-
 import os
 import argparse
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -30,9 +24,6 @@ from nervox.protocols import Classification
 from nervox.utils import base_parser, VerbosityLevel
 
 from nervox.modules import Module
-
-
-
 
 from nervox.data import DataStream
 from nervox.data.transforms import Normalize, OneHotLabels
@@ -50,7 +41,6 @@ def objective_configurer() -> Objective:
     accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
     objective = Objective(xentropy, optimizer=optimizer, metrics=[accuracy])
     return objective
-
 
 def train(args: argparse.Namespace):
     # data stream for training

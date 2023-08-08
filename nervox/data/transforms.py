@@ -14,18 +14,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Copyright (C) 2021 Rameez Ismail - All Rights Reserved
-Author: Rameez Ismail
-Email: rameez.ismaeel@gmail.com
-"""
-
 import tensorflow as tf
 from typing import Union, Tuple
-from nervox.data import Transform
 from nervox.utils import capture_params
 import tensorflow_addons as tfa
+from nervox.utils import capture_params
+
+# Aliases
 ResizeMethod = tf.image.ResizeMethod
+
+
+class Transform:
+    def __init_subclass__(cls, *args, **kwargs):
+        super().__init_subclass__(*args, **kwargs)
+        cls.__user_init__ = cls.__init__ 
+        # if the user has not already decorated the __init__ method, decorate it...         
+        if not hasattr(cls.__user_init__, '_wrapper_capture_params_'):
+            cls.__user_init__ = capture_params(cls.__init__, **kwargs)
+
+        def _wrapped_init(self, *args, **kwargs):
+                # call the user's __init__ method
+                super().__init__()
+                self.__user_init__(*args, **kwargs)
+
+        cls.__init__ = _wrapped_init
 
 
 class Shuffle:
