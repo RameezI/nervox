@@ -19,9 +19,7 @@
     The serializers are used to serialize the objects to JSON format.   
 """
 import inspect
-from typing import Any
 import tensorflow as tf
-from types import FunctionType
 
 def serializer_dtype(obj: tf.DType):
     if not isinstance(obj, tf.DType):
@@ -35,38 +33,6 @@ def serializer_dtype(obj: tf.DType):
         "__module__": 'tensorflow',
         "__init__": {'_args': [obj.as_datatype_enum]},
         "__repr__": repr(obj),
-    }
-
-def serializer_tensorshape(obj: tf.TensorShape):
-    if not isinstance(obj, tf.TensorShape):
-        raise TypeError(
-            f"Invalid type spotted:"
-            "\nExpected: tf.TensorShape"
-            "\nReceived: {type(obj).__name__}"
-        )
-    return {
-        "__class__": 'TensorShape',
-        "__module__": 'tensorflow',
-        "__init__": {'_args': [tuple(obj.as_list())]},
-    }
-
-
-def serializer_functiontype(obj: FunctionType):
-    if not isinstance(obj, FunctionType):
-        raise TypeError(
-            f"Invalid type spotted:"
-            "\nExpected a callable `FunctionType`, no methods allowed."
-            "\nReceived: `{type(obj).__name__}`"
-        )
-    
-    class Stub:
-        def __init__(self) -> None:
-            pass
-    
-    return {
-        "__class__": type(obj).__name__,
-        "__module__": obj.__module__,
-        obj.__name__: {'_args': [obj.__name__]},
     }
 
 class SerializerRegistry:

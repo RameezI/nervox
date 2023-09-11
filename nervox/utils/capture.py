@@ -100,9 +100,9 @@ def serialize_to_json(obj):
                 "1) The object provides `params` attribute, a dictionary with, at minimum,\n"
                 "the keys: `__init__`, `__class__` and `__module__` to enable reproduction.\n"
                 "If you  implemented a custom class, you may want to decorate your class\n"
-                "`__init__` method with `@capture_params to automatically achieve this.\n"
+                "`__init__` method with `@capture_params to automatically achieve this.\n\n"
                 "2) You can register a custom serializer for the object type by using the\n"
-                "`SerializerRegistry` mechanism, see the docs for details.\n"
+                "`SerializerRegistry` mechanism, see the docs for details.\n\n"
                 f" The concerned class is : `{type(_obj).__name__}`"
             )
         return _config

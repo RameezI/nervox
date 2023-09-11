@@ -31,21 +31,7 @@ import tensorflow as tf
 T = TypeVar("T")
 
 
-def replicate(
-    element: Union[T, Sequence[T]],
-    num_times: int,
-    name: str,
-) -> Tuple[T]:
-  """Replicates entry in `element` `num_times` if needed."""
-  if not isinstance(element, collections.abc.Sequence):
-    return (element,) * num_times
-  elif len(element) == 1:
-    return tuple(element * num_times)
-  elif len(element) == num_times:
-    return tuple(element)
-  raise TypeError(
-      "{} must be a scalar or sequence of length 1 or sequence of length {}."
-      .format(name, num_times))
+
 
 
 def _is_object(f: Any) -> bool:

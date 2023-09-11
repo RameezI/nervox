@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""A module that provides pure functional tensor transforms."""
+
 import tensorflow as tf
 from nervox.utils.types import TensorLike
 

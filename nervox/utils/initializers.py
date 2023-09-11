@@ -79,7 +79,7 @@ class Zeros(Initializer):
 
 class Ones(Initializer):
     """Initializer that generates tensors initialized to 1."""
-
+    
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
         dtype = _as_numerical_dtype(dtype)
         return tf.ones(shape, dtype)
