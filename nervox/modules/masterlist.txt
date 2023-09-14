@@ -1,0 +1,55 @@
+[X]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/axis_norm.py                      
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/axis_norm_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_apply.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_apply_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_norm.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_norm_test.py
+[X]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/bias.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/bias_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/conv.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/conv_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/conv_transpose.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/conv_transpose_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/depthwise_conv.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/depthwise_conv_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/dropout.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/dropout_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/embed.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/embed_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/group_norm.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/group_norm_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/linear.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/linear_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/parallel_linear.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/parallel_linear_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/recurrent.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/recurrent_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/reshape.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/reshape_test.py
+
+
+utils:
+[X]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/initializers.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/initializers_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/leaky_clip_by_value.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/leaky_clip_by_value_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/mixed_precision.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/mixed_precision_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/moving_averages.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/moving_averages_test.py
+[X]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/pad.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/pad_test.py
+[]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/scale_gradient.py
+[]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/scale_gradient_test.py
+[]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/sequential.py
+[]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/sequential_test.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/regularizers.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/regularizers_test.py
+
+
+metrics:
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/metrics.py
+[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/metrics_test.py
+
+
+

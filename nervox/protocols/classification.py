@@ -23,7 +23,7 @@ Email: rameez.ismaeel@gmail.com
 import tensorflow as tf
 from typing import Tuple, Dict, Union, Callable
 from nervox.protocols.protocol import Protocol
-from nervox.transcoders import Objective
+from nervox.objectives import Objective
 
 # objective configurator
 from nervox.losses import CrossEntropy

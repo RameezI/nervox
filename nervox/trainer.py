@@ -52,7 +52,7 @@ from tensorflow.python.profiler.option_builder import ProfileOptionBuilder
 
 # Bring in some core types/modules of nervox
 from nervox.data import DataStream
-from nervox.transcoders import Protocol
+from nervox.protocols import Protocol
 from nervox.utils import ProgressBar, ModeProgressBar
 from nervox.callbacks.callbacks import CheckPointer, ProgressParaphraser
 

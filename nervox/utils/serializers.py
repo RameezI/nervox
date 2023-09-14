@@ -35,6 +35,20 @@ def serializer_dtype(obj: tf.DType):
         "__repr__": repr(obj),
     }
 
+def serializer_slice(obj: slice):
+    if not isinstance(obj, slice):
+        raise TypeError(
+            f"Invalid type spotted:"
+            "\nExpected: slice"
+            "\nReceived: {type(obj).__name__}"
+        )
+    return {
+        "__class__": 'slice',
+        "__module__": 'builtins',
+        "__init__": {'_args': (obj.start, obj.stop, obj.step)},
+        "__repr__": repr(obj),
+    }
+
 class SerializerRegistry:
     """A registry for serializers of types.
 
@@ -72,6 +86,7 @@ class SerializerRegistry:
 
     _serializers = {
         tf.DType: serializer_dtype,
+        slice:  serializer_slice
     }
 
     @classmethod

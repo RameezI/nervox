@@ -16,11 +16,7 @@
 
 import tensorflow as tf
 from abc import abstractmethod
-from typing import final, Sequence, Dict
-from nervox import Trainer
-from nervox.protocols import Protocol
-from nervox.utils.types import TensorLike
-
+from typing import final, Sequence, Mapping, Any
 
 class Callback:
     """Abstract base class used to build new callbacks.
@@ -33,7 +29,7 @@ class Callback:
     """
 
     @final
-    def setup(self, trainer: Trainer, protocol: Protocol):
+    def setup(self, trainer, protocol):
         """Links the callback object to the trainer and protocol.
         This method is called by the trainer during callback setup."""
         setattr(self, "trainer", trainer)
@@ -58,7 +54,7 @@ class Callback:
         ...
 
     @abstractmethod
-    def on_train_batch_end(self, step, metrics: Dict[str, TensorLike]):
+    def on_train_batch_end(self, step, metrics: Mapping[str, any]):
         """Called at the end of a batch processing in the training loop.
         Subclasses should override for any actions to run.
         Args:
@@ -73,7 +69,7 @@ class Callback:
         ...
 
     @abstractmethod
-    def on_eval_batch_end(self, step, metrics: Dict[str, TensorLike]):
+    def on_eval_batch_end(self, step, metrics: Mapping[str, Any]):
         """Called at the end of a batch processing in the evaluation loop.
         Subclasses should override for any actions to run.
         Args:
@@ -97,7 +93,7 @@ class Callback:
         ...
 
     @abstractmethod
-    def on_epoch_end(self, epoch, metrics: Dict[str, TensorLike]):
+    def on_epoch_end(self, epoch, metrics: Mapping[str, Any]):
         """Called at the end of an epoch during a training loop.
         Subclasses should override for any actions to run.
         Args:
@@ -118,7 +114,7 @@ class Callback:
         ...
 
     @abstractmethod
-    def on_train_end(self, metrics: Dict[str, TensorLike]):
+    def on_train_end(self, metrics: Mapping[str, Any]):
         """Called at the end of training.
         Subclasses should override for any actions to run.
         Args:
@@ -135,7 +131,7 @@ class Callback:
         ...
 
     @abstractmethod
-    def on_eval_end(self, metrics: Dict[str, TensorLike]):
+    def on_eval_end(self, metrics: Mapping[str, Any]):
         """Called at the end of evaluation or validation.
         Subclasses should override for any actions to run.
         Args:
@@ -188,7 +184,7 @@ class CallbackGroup:
         }
         return hooks
 
-    def setup(self, trainer: Trainer, protocol: Protocol):
+    def setup(self, trainer, protocol):
         """Sets up each callback in the group. Takes care of calling the `setup`
         method of each callback in the group.
 
@@ -215,7 +211,7 @@ class CallbackGroup:
         ):
             callback.on_train_batch_begin(step) if is_implemented else None
 
-    def on_train_batch_end(self, step: int, metrics: Dict[str, TensorLike]):
+    def on_train_batch_end(self, step: int, metrics: Mapping[str, Any]):
         """Called at the end of a batch processing in the training loop.
         Takes care of calling the `on_train_batch_end` method of each callback
         in the group.
@@ -243,7 +239,7 @@ class CallbackGroup:
         ):
             callback.on_eval_batch_begin(step) if is_implemented else None
 
-    def on_eval_batch_end(self, step: int, metrics: Dict[str, TensorLike]):
+    def on_eval_batch_end(self, step: int, metrics: Mapping[str, Any]):
         """Called at the end of a batch processing in the evaluation loop.
         Takes care of calling the `on_eval_batch_end` method of each callback
         in the group.
@@ -272,7 +268,7 @@ class CallbackGroup:
         ):
             callback.on_epoch_begin(epoch) if is_implemented else None
 
-    def on_epoch_end(self, epoch: int, metrics: Dict[str, TensorLike]):
+    def on_epoch_end(self, epoch: int, metrics: Mapping[str, Any]):
         """Called at the end of an epoch. Takes care of calling the
         `on_epoch_end` method of each callback in the group.
 
@@ -295,7 +291,7 @@ class CallbackGroup:
         ):
             callback.on_train_begin() if is_implemented else None
 
-    def on_train_end(self, metrics: Dict[str, TensorLike]):
+    def on_train_end(self, metrics: Mapping[str, Any]):
         """Called at the end of the training. Takes care of calling the
         `on_train_end` method of each callback in the group.
 
@@ -317,7 +313,7 @@ class CallbackGroup:
         ):
             callback.on_eval_begin() if is_implemented else None
 
-    def on_eval_end(self, metrics: Dict[str, TensorLike]):
+    def on_eval_end(self, metrics: Mapping[str, Any]):
         """Called at the end of the evaluation. Takes care of calling the
         `on_eval_end` method of each callback in the group.
 

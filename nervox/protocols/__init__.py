@@ -21,6 +21,7 @@ Email: rameez.ismaeel@gmail.com
 """
 
 # TODO: Automate this
+from .protocol import Protocol
 from .classification import Classification
 #from .classification import ClassificationMultiLabel
 #from .regression import Regression
