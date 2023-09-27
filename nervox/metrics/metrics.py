@@ -57,7 +57,7 @@ class Metric(tf.Module, metaclass=ABCMeta):
         Updates the metrics state using the passed batch output.
         Usually, this is called once for each batch.
         """
-        pass
+        ...
 
     @property
     def value(self):
@@ -75,7 +75,7 @@ class Metric(tf.Module, metaclass=ABCMeta):
         Returns:
             Any: the actual quantity of interest.
         """
-        pass
+        ...
 
 
 # class Mean(Metric):
@@ -166,16 +166,16 @@ ShapeLike = Union[Tuple, tf.TensorShape, TensorLike]
 
 
 class Mean(Metric):
-    """Maintains a moving average for values along specified dimensions.
-    Two modes are supported, CumulativeRunningAverage (default) that computes
-    a running arithmetic mean and ExponentialRunningAverage, which calculates
-    the running mean that is biased either towards the history or towards the
-    more immediate evidence.
+    """Maintains a moving average of input values along a specified dimension(s).
+    Two modes are supported, the CumulativeRunningAverage (default) computes a running
+    arithmetic mean and the ExponentialRunningAverage, which calculates the running
+    mean that is biased either towards the history or towards the more immediate
+    evidence.
 
     CumulativeRunningAverage:
     When  momentum is set to `None` this mode is used to compute the running mean.
-    In this mode each sample is weighted equally towards the average resulting in
-    arithmetic mean of the values over the specified axes.
+    In this mode each sample is weighted proportionally towards the average resulting
+    in an arithmetic mean of the values over the specified axes.
 
     Algorithm:
         Initially:
@@ -298,16 +298,20 @@ class Mean(Metric):
     def result(self) -> TensorLike:
         if not self.built:
             raise AssertionError(
-                "Results requested on an uninitiated object, the metric needs to be built first!\n"\
-                " The metric is automatically built on first invocation, i.e. when passed a\n"\
-                " tensor-like object to compute a running mean. When no such tensor is yet," \
+                "Results requested on an uninitiated object, the metric needs to be built first!\n"
+                " The metric is automatically built on first invocation, i.e. when passed a\n"
+                " tensor-like object to compute a running mean. When no such tensor is yet,"
                 " provided, the metic is uninitiated and the internal state is undefined.\n\n"
             )
         if self._momentum:
             count = tf.cast(self._count, self.dtype)
             mean = self._latent / (1 - tf.pow(self._momentum, count))
         else:
-            mean = self._latent
+            mean = tf.cond(
+                self._count > 0,
+                lambda: self._latent,
+                lambda: self._latent + np.nan,
+            )
         return mean
 
     def reset(self):
