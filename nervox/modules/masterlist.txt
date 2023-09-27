@@ -1,9 +1,7 @@
 [X]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/axis_norm.py                      
-[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/axis_norm_test.py
-[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_apply.py
-[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_apply_test.py
-[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_norm.py
-[ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_norm_test.py
+[X]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/axis_norm_test.py
+[]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_norm.py
+[]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/batch_norm_test.py
 [X]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/bias.py
 [ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/bias_test.py
 [ ]/home/rameez/workspaces/sonnet/sonnet/sonnet/src/conv.py
