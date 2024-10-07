@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "emt"
+name = "nervox"
 description = "A framework to support development, training, evaluation & deployment of deep neural networks using tensorflow"
 readme = "README.md"
 authors = [
