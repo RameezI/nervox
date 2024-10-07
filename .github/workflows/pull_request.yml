@@ -28,21 +28,11 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
-      - name: Install Dependencies
-        run: |
-          python --version
-          python -m pip  install --upgrade pip
-          python -m pip install -e .[dev]
-
       - name: Run Black
         uses:  psf/black@stable
         id: action_black
         with:
           options: "."
-      
-
-      - name: Check for Black Formatter Changes
-        run: git diff
 
       - name: Suggest Formating Changes
         uses: reviewdog/action-suggester@v1.18
