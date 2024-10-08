@@ -49,7 +49,7 @@ def train(args: argparse.Namespace):
     )
 
     # data stream for validation
-    eval_stream = DataStream(
+        eval_stream = DataStream(
         "cifar10",
         version=args.dataset_version,
         split="test",
