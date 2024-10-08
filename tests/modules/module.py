@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 import nervox as nx
 
+
 class SimpleDense(nx.Module):
 
     def __init__(self, units=32):
@@ -9,10 +10,7 @@ class SimpleDense(nx.Module):
         self.units = units
 
     def build(self, input_shape):
-        kernel = tf.random.normal(
-            shape=(input_shape[-1], self.units),
-            dtype=self.dtype
-        )
+        kernel = tf.random.normal(shape=(input_shape[-1], self.units), dtype=self.dtype)
 
         bias = tf.zeros(shape=(self.units,), dtype=self.dtype)
 
@@ -53,9 +51,9 @@ class TestSimpleDenseModule(tf.test.TestCase):
         assert dense.dtype == tf.float32
 
         # test get_config method
-        config = dense.params['__init__']
+        config = dense.params["__init__"]
         assert isinstance(config, dict)
-        assert config == {'units': 4}
+        assert config == {"units": 4}
 
         # test from_config method
         dense2 = SimpleDense(**config)
@@ -63,6 +61,7 @@ class TestSimpleDenseModule(tf.test.TestCase):
 
         # test compute method
         assert np.allclose(dense(x), dense.compute(x))
+
 
 if __name__ == "__main__":
     tf.test.main()

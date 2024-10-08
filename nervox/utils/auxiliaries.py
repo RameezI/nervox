@@ -28,6 +28,7 @@ from enum import Enum
 
 from tensorflow.python.keras.utils import tf_utils
 
+
 class VerbosityLevel(Enum):
     KEEP_SILENT = "silent"
     UPDATE_AT_EPOCH = ("epoch",)
@@ -116,10 +117,10 @@ def to_tensor_shape(input_shape):
 
     Args:
     input_shape: A nested structure of objects to be converted to TensorShapes.
-    
-    Returns:     
-    A nested structure of TensorShapes.  
-    
+
+    Returns:
+    A nested structure of TensorShapes.
+
     Raises:
     ValueError: when the input tensor shape can't be converted.
     """
@@ -289,7 +290,7 @@ def capture_params(*args_outer, **kwargs_outer):
             setattr(obj, attribute_name, attribute_value)
             obj._setattr_tracking = restore_tracking
         else:
-            setattr(obj, attribute_name, attribute_value)  
+            setattr(obj, attribute_name, attribute_value)
 
     def _validate_params_attribute_usage(params):
         if not isinstance(params, dict):
@@ -349,7 +350,7 @@ def capture_params(*args_outer, **kwargs_outer):
                     " Please use positional arguments or keywords only arguments for the (decorated) function definition!"
                 )
 
-            if hasattr(obj, "params"):                
+            if hasattr(obj, "params"):
                 try:
                     _validate_params_attribute_usage(obj.params)
 

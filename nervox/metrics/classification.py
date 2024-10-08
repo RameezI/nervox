@@ -3,11 +3,11 @@ Copyright (C) 2021 Rameez Ismail - All Rights Reserved
 Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
+
 from abc import ABC
 from enum import Enum
 from functools import partial
-from typing import \
-    Callable, Union, Tuple, Dict, Sequence
+from typing import Callable, Union, Tuple, Dict, Sequence
 
 import numpy as np
 import tensorflow as tf
@@ -20,16 +20,18 @@ tnp = tf.experimental.numpy
 
 
 class AveragingMode(Enum):
-    SAMPLE = 'sample'
-    MICRO = 'micro'
-    MACRO = 'macro'
-    WEIGHTED = 'weighted'
+    SAMPLE = "sample"
+    MICRO = "micro"
+    MACRO = "macro"
+    WEIGHTED = "weighted"
 
 
-def compute_confusion_matrix(y_true: TensorLike, y_pred: TensorLike,
-                             bifurcators: int = 1,
-                             weights=tf.constant(1.0),
-                             ) -> Tuple[Dict[str, tf.Tensor], Sequence]:
+def compute_confusion_matrix(
+    y_true: TensorLike,
+    y_pred: TensorLike,
+    bifurcators: int = 1,
+    weights=tf.constant(1.0),
+) -> Tuple[Dict[str, tf.Tensor], Sequence]:
     """Update the confusion matrix variables.
     
     To compute TP/FP/TN/FN, we  measure the classifier at given thresholds `t`
@@ -79,50 +81,54 @@ def compute_confusion_matrix(y_true: TensorLike, y_pred: TensorLike,
                                 the specified threshold.
     """
     if bifurcators < 1:
-        raise ValueError('Invalid value for bifurcators!\n'
-                         'The bifurcators is strictly a positive integer i.e. must be >0'
-                         f'Found: {bifurcators}')
-    
+        raise ValueError(
+            "Invalid value for bifurcators!\n"
+            "The bifurcators is strictly a positive integer i.e. must be >0"
+            f"Found: {bifurcators}"
+        )
+
     thresholds = np.linspace(0.0, 1.0, num=bifurcators + 2, endpoint=True)
     num_buckets = len(thresholds)
-    
+
     y_pred = y_pred - np.finfo(np.float16).eps
     # ensure values stays in the [0, 1] range
     y_pred = tf.clip_by_value(y_pred, clip_value_min=0.0, clip_value_max=1.0)
-    
+
     true_labels = tf.multiply(y_true, weights)
     false_labels = tf.multiply((1.0 - y_true), weights)
     total_true_labels = tf.reduce_sum(true_labels, axis=0)
     total_false_labels = tf.reduce_sum(false_labels, axis=0)
-    
+
     bucket_indices = tf.math.floor(y_pred * (num_buckets - 1))
     bucket_indices = tf.cast(bucket_indices, tf.int32)
-    
+
     true_labels = tf.transpose(true_labels)
     false_labels = tf.transpose(false_labels)
-    
+
     # Fill buckets
     bucket_indices = tf.transpose(bucket_indices)
-    
+
     def gather_buckets(args):
         data, ids = args
-        return tf.math.unsorted_segment_sum(data=data, segment_ids=ids,
-                                            num_segments=num_buckets)
-    
+        return tf.math.unsorted_segment_sum(
+            data=data, segment_ids=ids, num_segments=num_buckets
+        )
+
     tp_buckets = tf.vectorized_map(gather_buckets, (true_labels, bucket_indices))
     fp_buckets = tf.vectorized_map(gather_buckets, (false_labels, bucket_indices))
-    
+
     # calculate tp/fp/tn/fn
     tp = tf.transpose(tf.cumsum(tp_buckets, reverse=True, axis=1))
     fp = tf.transpose(tf.cumsum(fp_buckets, reverse=True, axis=1))
     tn = total_false_labels - fp
     fn = total_true_labels - tp
-    
-    return {'true_positives': tp,
-            'false_positives': fp,
-            'true_negatives': tn,
-            'false_negatives': fn
-            }, thresholds
+
+    return {
+        "true_positives": tp,
+        "false_positives": fp,
+        "true_negatives": tn,
+        "false_negatives": fn,
+    }, thresholds
 
 
 class ClassificationMetric(Metric, ABC):
@@ -158,24 +164,27 @@ class ClassificationMetric(Metric, ABC):
       **kwargs             Any additional arguments accepted by the base class
 
     """
-    
-    def __init__(self, transform: Callable = lambda x: x,
-                 averaging_mode: Union[AveragingMode, None] = None, *,
-                 name: str, dtype: tf.DType = tf.float32
-                 ):
+
+    def __init__(
+        self,
+        transform: Callable = lambda x: x,
+        averaging_mode: Union[AveragingMode, None] = None,
+        *,
+        name: str,
+        dtype: tf.DType = tf.float32,
+    ):
         super().__init__(name, dtype)
         self._transform = transform
         self.average_mode = averaging_mode
         self.dtype = dtype
-        
+
         self._value_sum = None  # accumulates the value
         self._count = None  # accumulates the count
-    
+
     @staticmethod
     def _check_shape(y_true: TensorLike, y_pred: TensorLike, weights: TensorLike):
-        msg = 'Inconsistent shapes spotted when calculating classification metric!\n'
-        shapes = [(y_true, ('N', 'L')),
-                  (y_pred, ('N', 'L'))]
+        msg = "Inconsistent shapes spotted when calculating classification metric!\n"
+        shapes = [(y_true, ("N", "L")), (y_pred, ("N", "L"))]
         tf.debugging.assert_shapes(shapes, message=msg, summarize=True)
 
         tf.debugging.assert_rank_in(weights, [0, 1, 2], message=msg)
@@ -187,9 +196,10 @@ class ClassificationMetric(Metric, ABC):
         # if len(weights.shape) == 1:
         #     tf.debugging.assert_shapes([(weights, 'N')])
         #
-    
-    def _preprocess(self, y_true: TensorLike, scores: TensorLike,
-                    weights: TensorLike) -> Tuple[TensorLike, TensorLike, TensorLike]:
+
+    def _preprocess(
+        self, y_true: TensorLike, scores: TensorLike, weights: TensorLike
+    ) -> Tuple[TensorLike, TensorLike, TensorLike]:
         """
         Converts inputs to tensors and preform shape checking
         """
@@ -203,25 +213,37 @@ class ClassificationMetric(Metric, ABC):
             weights = tf.reshape(weights, (-1, 1))
             weights = tf.cast(weights, self.dtype)
         return y_true, y_pred, weights
-    
+
     def _create_variables(self, shape):
-        """ These variables are used to track accuracy score for the case of `sample` and
-         `micro` averaging.
-         """
+        """These variables are used to track accuracy score for the case of `sample` and
+        `micro` averaging.
+        """
         value_sum = tf.Variable(tf.zeros(shape), trainable=False, dtype=self.dtype)
         count = tf.Variable(tf.zeros(shape), trainable=False, dtype=self.dtype)
         return value_sum, count
-    
+
     def reset(self) -> None:
-        self._value_sum.assign(tf.zeros(tf.TensorShape(tf.shape(self._value_sum)), self.dtype)) \
-            if self._value_sum is not None else None
-        
-        self._count.assign(tf.zeros(tf.TensorShape(tf.shape(self._count)), self.dtype)) \
-            if self._value_sum is not None else None
-    
+        (
+            self._value_sum.assign(
+                tf.zeros(tf.TensorShape(tf.shape(self._value_sum)), self.dtype)
+            )
+            if self._value_sum is not None
+            else None
+        )
+
+        (
+            self._count.assign(
+                tf.zeros(tf.TensorShape(tf.shape(self._count)), self.dtype)
+            )
+            if self._value_sum is not None
+            else None
+        )
+
     def result(self) -> TensorLike:
         if self._count is None:
-            raise ValueError(f'No data has been added to the `{self.name}` metric, I am unable to produce results!.')
+            raise ValueError(
+                f"No data has been added to the `{self.name}` metric, I am unable to produce results!."
+            )
 
         if self.average_mode in [AveragingMode.MACRO, AveragingMode.WEIGHTED]:
             if self.average_mode == AveragingMode.WEIGHTED:
@@ -230,14 +252,14 @@ class ClassificationMetric(Metric, ABC):
             else:
                 count = self._count
                 reduce_op = tf.reduce_mean
-            
+
             # scores = tf.where(count > tf.constant(0.),
             #                   self._value_sum / count, tf.zeros_like(self._value_sum))
             scores = tf.math.divide_no_nan(self._value_sum, count)
             scores = reduce_op(scores, axis=-1)
         else:
             scores = tf.math.divide_no_nan(self._value_sum, self._count)
-        
+
         if tf.size(scores) == 1:
             scores = tf.reshape(scores, ())
 
@@ -246,227 +268,254 @@ class ClassificationMetric(Metric, ABC):
 
 class PrecisionScore(ClassificationMetric):
     """
-      Args:
-      transform:          Transforms the prediction tensor; by default a sigmoid transforms is applied.
-      
-      bifurcators:         The number of equally distributed thresholds between 0 and 1; the default values is 1.
-                           This means by default the metric is evaluated at a decision threshold of 0.5.
-      
-      include_endpoints:   Weather to include the endpoints, i.e. 0 and 1, as thresholds for precision evaluation.
-                           By default, the endpoints are not included while reporting the precision scores.
+    Args:
+    transform:          Transforms the prediction tensor; by default a sigmoid transforms is applied.
 
-      averaging_mode:     The  accumulating mode for the metric
-      
-                           'sample':     Calculate metrics for each instance, and report the average subset precision.
-                                         (only meaningful for multilabel classification where this differs
-                                         from accuracy_score).
+    bifurcators:         The number of equally distributed thresholds between 0 and 1; the default values is 1.
+                         This means by default the metric is evaluated at a decision threshold of 0.5.
 
-                           'micro':      Calculates the precision over all prediction elements by inflating the
-                                         prediction and label tensors.
+    include_endpoints:   Weather to include the endpoints, i.e. 0 and 1, as thresholds for precision evaluation.
+                         By default, the endpoints are not included while reporting the precision scores.
 
-                           'macro':      Calculates mean precision for each class and report their unweighted mean.
-                                         This does not take label-imbalance into account.
+    averaging_mode:     The  accumulating mode for the metric
 
-                           'weighted':   Calculates mean accuracy for each class and reports a weighted, by support
-                                         (the number of true instances for each label), average. This alters ‘macro’
-                                         to account for label imbalance; it can result in an F-score that is not
-                                         between precision and recall.
+                         'sample':     Calculate metrics for each instance, and report the average subset precision.
+                                       (only meaningful for multilabel classification where this differs
+                                       from accuracy_score).
 
-                           None:        Provides metrics for each class independently. By default, this metric
-                                         returns the class-wise accuracy score.
+                         'micro':      Calculates the precision over all prediction elements by inflating the
+                                       prediction and label tensors.
 
-              **kwargs                   Any additional arguments accepted by the base class
+                         'macro':      Calculates mean precision for each class and report their unweighted mean.
+                                       This does not take label-imbalance into account.
 
-      name:               The name of the metric.
+                         'weighted':   Calculates mean accuracy for each class and reports a weighted, by support
+                                       (the number of true instances for each label), average. This alters ‘macro’
+                                       to account for label imbalance; it can result in an F-score that is not
+                                       between precision and recall.
+
+                         None:        Provides metrics for each class independently. By default, this metric
+                                       returns the class-wise accuracy score.
+
+            **kwargs                   Any additional arguments accepted by the base class
+
+    name:               The name of the metric.
     """
-    
-    def __init__(self, transform: Callable = lambda x: x,
-                 bifurcators: int = 1,
-                 include_endpoints: bool = False,
-                 averaging_mode: Union[AveragingMode, None] = None, *,
-                 name: str = 'accuracy', dtype: tf.DType = tf.float32
-                 ):
+
+    def __init__(
+        self,
+        transform: Callable = lambda x: x,
+        bifurcators: int = 1,
+        include_endpoints: bool = False,
+        averaging_mode: Union[AveragingMode, None] = None,
+        *,
+        name: str = "accuracy",
+        dtype: tf.DType = tf.float32,
+    ):
         super().__init__(transform, averaging_mode, name=name, dtype=dtype)
         self._bifurcators: int = bifurcators
         self._include_endpoints: bool = include_endpoints
-    
-    def update(self, targets: TensorLike, scores: TensorLike,
-               weights: TensorLike = tf.constant(1.0)) -> None:
-        targets, predictions, weights \
-            = self._preprocess(targets, scores, weights)
-        
-        confusion_matrix, _ = \
-            compute_confusion_matrix(targets, predictions,
-                                     bifurcators=self._bifurcators,
-                                     weights=weights)
-        
-        tp = confusion_matrix['true_positives']
-        fp = confusion_matrix['false_positives']
-        
+
+    def update(
+        self,
+        targets: TensorLike,
+        scores: TensorLike,
+        weights: TensorLike = tf.constant(1.0),
+    ) -> None:
+        targets, predictions, weights = self._preprocess(targets, scores, weights)
+
+        confusion_matrix, _ = compute_confusion_matrix(
+            targets, predictions, bifurcators=self._bifurcators, weights=weights
+        )
+
+        tp = confusion_matrix["true_positives"]
+        fp = confusion_matrix["false_positives"]
+
         if not self._include_endpoints:
             tp, fp = tp[1:-1], fp[1:-1]
-        
+
         if self.average_mode == AveragingMode.SAMPLE:
             raise NotImplemented
-        
+
         if self.average_mode == AveragingMode.MICRO:
             tp = tf.reduce_sum(tp, axis=-1)
             fp = tf.reduce_sum(fp, axis=-1)
-        
+
         if self._value_sum is None or self._count is None:
             self._value_sum, self._count = self._create_variables(tf.shape(tp))
-        
+
         self._value_sum.assign_add(tp)
         self._count.assign_add(tp + fp)
 
 
 class RecallScore(ClassificationMetric):
     """
-      Args:
-      transform:          Transforms the prediction tensor; by default a sigmoid transforms is applied.
+    Args:
+    transform:          Transforms the prediction tensor; by default a sigmoid transforms is applied.
 
-      bifurcators:         The number of equally distributed thresholds between 0 and 1; the default values is 1.
-                           This means by default the metric is evaluated at a decision threshold of 0.5.
+    bifurcators:         The number of equally distributed thresholds between 0 and 1; the default values is 1.
+                         This means by default the metric is evaluated at a decision threshold of 0.5.
 
-      include_endpoints:   Weather to include the endpoints, i.e. 0 and 1, as thresholds for precision evaluation.
-                           By default, the endpoints are not included while reporting the precision scores.
+    include_endpoints:   Weather to include the endpoints, i.e. 0 and 1, as thresholds for precision evaluation.
+                         By default, the endpoints are not included while reporting the precision scores.
 
-      averaging_mode:     The  accumulating mode for the metric
+    averaging_mode:     The  accumulating mode for the metric
 
-                           'sample':     Calculate metrics for each instance, and report the average subset precision.
-                                         (only meaningful for multilabel classification where this differs
-                                         from accuracy_score).
+                         'sample':     Calculate metrics for each instance, and report the average subset precision.
+                                       (only meaningful for multilabel classification where this differs
+                                       from accuracy_score).
 
-                           'micro':      Calculates the precision over all prediction elements by inflating the
-                                         prediction and label tensors.
+                         'micro':      Calculates the precision over all prediction elements by inflating the
+                                       prediction and label tensors.
 
-                           'macro':      Calculates mean precision for each class and report their unweighted mean.
-                                         This does not take label-imbalance into account.
+                         'macro':      Calculates mean precision for each class and report their unweighted mean.
+                                       This does not take label-imbalance into account.
 
-                           'weighted':   Calculates mean accuracy for each class and reports a weighted, by support
-                                         (the number of true instances for each label), average. This alters ‘macro’
-                                         to account for label imbalance; it can result in an F-score that is not
-                                         between precision and recall.
+                         'weighted':   Calculates mean accuracy for each class and reports a weighted, by support
+                                       (the number of true instances for each label), average. This alters ‘macro’
+                                       to account for label imbalance; it can result in an F-score that is not
+                                       between precision and recall.
 
-                           None:        Provides metrics for each class independently. By default, this metric
-                                         returns the class-wise accuracy score.
+                         None:        Provides metrics for each class independently. By default, this metric
+                                       returns the class-wise accuracy score.
 
-              **kwargs                   Any additional arguments accepted by the base class
+            **kwargs                   Any additional arguments accepted by the base class
 
-      name:               The name of the metric.
+    name:               The name of the metric.
     """
-    
-    def __init__(self, transform: Callable = lambda x: x,
-                 bifurcators: int = 1,
-                 include_endpoints: bool = False,
-                 averaging_mode: Union[AveragingMode, None] = None, *,
-                 name: str = 'accuracy', dtype: tf.DType = tf.float32
-                 ):
+
+    def __init__(
+        self,
+        transform: Callable = lambda x: x,
+        bifurcators: int = 1,
+        include_endpoints: bool = False,
+        averaging_mode: Union[AveragingMode, None] = None,
+        *,
+        name: str = "accuracy",
+        dtype: tf.DType = tf.float32,
+    ):
         super().__init__(transform, averaging_mode, name=name, dtype=dtype)
         self._bifurcators: int = bifurcators
         self._include_endpoints: bool = include_endpoints
-    
-    def update(self, targets: TensorLike, scores: TensorLike,
-               weights: TensorLike = tf.constant(1.0)) -> None:
-        targets, predictions, weights \
-            = self._preprocess(targets, scores, weights)
-        
-        confusion_matrix, _ = \
-            compute_confusion_matrix(targets, predictions,
-                                     bifurcators=self._bifurcators,
-                                     weights=weights)
-        
-        tp = confusion_matrix['true_positives']
-        fn = confusion_matrix['false_negatives']
-        
+
+    def update(
+        self,
+        targets: TensorLike,
+        scores: TensorLike,
+        weights: TensorLike = tf.constant(1.0),
+    ) -> None:
+        targets, predictions, weights = self._preprocess(targets, scores, weights)
+
+        confusion_matrix, _ = compute_confusion_matrix(
+            targets, predictions, bifurcators=self._bifurcators, weights=weights
+        )
+
+        tp = confusion_matrix["true_positives"]
+        fn = confusion_matrix["false_negatives"]
+
         if not self._include_endpoints:
             tp, fn = tp[1:-1], fn[1:-1]
-        
+
         if self.average_mode == AveragingMode.SAMPLE:
             raise NotImplemented
-        
+
         if self.average_mode == AveragingMode.MICRO:
             tp = tf.reduce_sum(tp, axis=-1)
             fn = tf.reduce_sum(fn, axis=-1)
-        
+
         if self._value_sum is None or self._count is None:
             self._value_sum, self._count = self._create_variables(tf.shape(tp))
-        
+
         self._value_sum.assign_add(tp)
         self._count.assign_add(tp + fn)
 
 
 class AveragePrecisionScore(ClassificationMetric):
     """
-      Args:
-      transform:          Transforms the prediction tensor; by default a sigmoid transforms is applied.
-      
-      bifurcators:        The number of thresholds applied when calculating the score. The thresholds are evenly
-                          distributed between the endpoints [0-1]
+    Args:
+    transform:          Transforms the prediction tensor; by default a sigmoid transforms is applied.
 
-      averaging_mode:     The  accumulating mode for the metric
+    bifurcators:        The number of thresholds applied when calculating the score. The thresholds are evenly
+                        distributed between the endpoints [0-1]
+
+    averaging_mode:     The  accumulating mode for the metric
 
 
-                         'sample':      Computes average subset accuracy at `sample` granularity. An average rate
-                                         of  sample matches is reported, with a `match`  defined as all labels being
-                                         correctly predicted. An average accuracy over all the samples is reported.
+                       'sample':      Computes average subset accuracy at `sample` granularity. An average rate
+                                       of  sample matches is reported, with a `match`  defined as all labels being
+                                       correctly predicted. An average accuracy over all the samples is reported.
 
-                         'micro':        Calculates the mean accuracy over all prediction elements by inflating the
-                                         prediction and label tensors. An average accuracy over all predictions
-                                         is reported.
+                       'micro':        Calculates the mean accuracy over all prediction elements by inflating the
+                                       prediction and label tensors. An average accuracy over all predictions
+                                       is reported.
 
-                         'macro':        Calculates mean accuracy for each class and report their unweighted mean.
-                                         This does not take label-imbalance into account.
+                       'macro':        Calculates mean accuracy for each class and report their unweighted mean.
+                                       This does not take label-imbalance into account.
 
-                         'weighted':     Calculates mean accuracy for each class and reports a weighted, by support
-                                         (the number of true instances for each label), average. This alters ‘macro’
-                                         to account for label imbalance; it can result in an F-score that is not
-                                         between precision and recall.
+                       'weighted':     Calculates mean accuracy for each class and reports a weighted, by support
+                                       (the number of true instances for each label), average. This alters ‘macro’
+                                       to account for label imbalance; it can result in an F-score that is not
+                                       between precision and recall.
 
-                         None:           Provides metrics for each class independently. By default, this metric
-                                         returns the class-wise accuracy score.
+                       None:           Provides metrics for each class independently. By default, this metric
+                                       returns the class-wise accuracy score.
 
-      **kwargs           Any additional arguments accepted by the base class
-              
-      name:              The name of the metric.
+    **kwargs           Any additional arguments accepted by the base class
+
+    name:              The name of the metric.
     """
-    
-    def __init__(self, transform: Callable = lambda x: x,
-                 bifurcators: int = 500,
-                 averaging_mode: Union[AveragingMode, None] = None, *,
-                 name: str = 'accuracy', dtype: tf.DType = tf.float32
-                 ):
+
+    def __init__(
+        self,
+        transform: Callable = lambda x: x,
+        bifurcators: int = 500,
+        averaging_mode: Union[AveragingMode, None] = None,
+        *,
+        name: str = "accuracy",
+        dtype: tf.DType = tf.float32,
+    ):
         super().__init__(transform, averaging_mode, name=name, dtype=dtype)
-        
-        averaging_mode = None \
-            if averaging_mode in [AveragingMode.MACRO, AveragingMode.WEIGHTED]\
+
+        averaging_mode = (
+            None
+            if averaging_mode in [AveragingMode.MACRO, AveragingMode.WEIGHTED]
             else averaging_mode
-        
-        self._precision = PrecisionScore(bifurcators=bifurcators,
-                                         include_endpoints=True,
-                                         averaging_mode=averaging_mode)
-        
-        self._recall = RecallScore(bifurcators=bifurcators,
-                                   include_endpoints=True,
-                                   averaging_mode=averaging_mode)
-    
-    def update(self, targets: TensorLike, scores: TensorLike,
-               weights: TensorLike = tf.constant(1.0)) -> None:
-    
-        targets, predictions, weights \
-            = self._preprocess(targets, scores, weights)
-        
+        )
+
+        self._precision = PrecisionScore(
+            bifurcators=bifurcators,
+            include_endpoints=True,
+            averaging_mode=averaging_mode,
+        )
+
+        self._recall = RecallScore(
+            bifurcators=bifurcators,
+            include_endpoints=True,
+            averaging_mode=averaging_mode,
+        )
+
+    def update(
+        self,
+        targets: TensorLike,
+        scores: TensorLike,
+        weights: TensorLike = tf.constant(1.0),
+    ) -> None:
+
+        targets, predictions, weights = self._preprocess(targets, scores, weights)
+
         self._precision.update(targets, predictions, weights)
         self._recall.update(targets, predictions, weights)
-        
+
         if self._count is None:
             _, self._count = self._create_variables(targets.shape[-1])
         self._count.assign_add(tf.reduce_sum(targets * weights, axis=0))
-    
+
     def result(self) -> TensorLike:
-        avg_precision = -tf.reduce_sum(tnp.diff(self._recall.result(), axis=0)
-                                       * self._precision.result()[:-1], axis=0)
-        
+        avg_precision = -tf.reduce_sum(
+            tnp.diff(self._recall.result(), axis=0) * self._precision.result()[:-1],
+            axis=0,
+        )
+
         if self.average_mode in [AveragingMode.MACRO, AveragingMode.WEIGHTED]:
             if self.average_mode == AveragingMode.WEIGHTED:
                 weights = tf.math.divide_no_nan(self._count, tf.reduce_sum(self._count))
@@ -474,103 +523,115 @@ class AveragePrecisionScore(ClassificationMetric):
             else:
                 avg_precision = tf.reduce_mean(avg_precision, axis=-1)
         return avg_precision
-    
+
     def reset(self) -> None:
         self._precision.reset()
         self._recall.reset()
-        
-        
+
+
 class AccuracyScore(ClassificationMetric):
     """
-      Args:
-      transform:          Transforms the prediction tensor; by default a sigmoid transforms is applied.
-      
-      subset_mode:        When this boolean flag is set `sample` averaging mode computes a subset accuracy.
-                          This flag does not affect other averaging mode. See the averaging_mode option for more
-                          details.
+    Args:
+    transform:          Transforms the prediction tensor; by default a sigmoid transforms is applied.
 
-      averaging_mode:     The  accumulating mode for the metric
+    subset_mode:        When this boolean flag is set `sample` averaging mode computes a subset accuracy.
+                        This flag does not affect other averaging mode. See the averaging_mode option for more
+                        details.
 
-                          'sample':      When `subset_mode` is set, this computes subset accuracy at sample granularity.
-                                         An average rate of  sample matches is reported, with a `match` defined as all
-                                         labels being correctly predicted. When `subset_mode` is False, this computes
-                                         the (TP+TN)/total for each sample and reports the average over all samples.
+    averaging_mode:     The  accumulating mode for the metric
 
-                          'micro':       Calculates the mean accuracy over all prediction elements by inflating the
-                                         prediction and label tensors. An average accuracy over all predictions
-                                         is reported.
+                        'sample':      When `subset_mode` is set, this computes subset accuracy at sample granularity.
+                                       An average rate of  sample matches is reported, with a `match` defined as all
+                                       labels being correctly predicted. When `subset_mode` is False, this computes
+                                       the (TP+TN)/total for each sample and reports the average over all samples.
 
-                          'macro':       Calculates mean accuracy for each class and report their unweighted mean.
-                                         This does not take label-imbalance into account.
+                        'micro':       Calculates the mean accuracy over all prediction elements by inflating the
+                                       prediction and label tensors. An average accuracy over all predictions
+                                       is reported.
 
-                          'weighted':    Calculates mean accuracy for each class and reports a weighted, by support
-                                         (the number of true instances for each label), average. This alters ‘macro’
-                                         to account for label imbalance; it can result in an F-score that is not
-                                         between precision and recall.
+                        'macro':       Calculates mean accuracy for each class and report their unweighted mean.
+                                       This does not take label-imbalance into account.
 
-                          None:         Provides metrics for each class independently. By default, this metric
-                                         returns the class-wise accuracy score.
+                        'weighted':    Calculates mean accuracy for each class and reports a weighted, by support
+                                       (the number of true instances for each label), average. This alters ‘macro’
+                                       to account for label imbalance; it can result in an F-score that is not
+                                       between precision and recall.
 
-      **kwargs           Any additional arguments accepted by the base class
-              
-      name:               The name of the metric.
+                        None:         Provides metrics for each class independently. By default, this metric
+                                       returns the class-wise accuracy score.
+
+    **kwargs           Any additional arguments accepted by the base class
+
+    name:               The name of the metric.
     """
-    
-    def __init__(self, transform: Callable = lambda x: x, subset_mode: bool = True,
-                 averaging_mode: Union[AveragingMode, None] = None, *,
-                 name: str = 'accuracy', dtype: tf.DType = tf.float32
-                 ):
+
+    def __init__(
+        self,
+        transform: Callable = lambda x: x,
+        subset_mode: bool = True,
+        averaging_mode: Union[AveragingMode, None] = None,
+        *,
+        name: str = "accuracy",
+        dtype: tf.DType = tf.float32,
+    ):
         self._subset_mode = subset_mode
         super().__init__(transform, averaging_mode, name=name, dtype=dtype)
-    
-    def update(self, targets: TensorLike, scores: TensorLike,
-               weights: TensorLike = tf.constant(1.0)) -> None:
+
+    def update(
+        self,
+        targets: TensorLike,
+        scores: TensorLike,
+        weights: TensorLike = tf.constant(1.0),
+    ) -> None:
         """
-        
+
         Args:
             targets:     A tensor of shape (n_samples, n_classes) or (n_samples,)
                         Ground truth (correct) target values.
-                        
+
             scores:     A tensor of shape (n_samples, n_classes) or (n_samples,)
                         Estimated targets as returned by a classifier.
-                        
+
             weights:    A tensor of shape (n_samples,) or any shape that can broadcast to y_pred/y_true.
                         The default value is == `1.0`, which implies weights are distributed equally.
-                        
+
                         This argument can be used to assign class weights as well.To do so a weight tensor of shape
                         (1, n_classes) is passed, which effectively assigns each class a corresponding weight and
                         broadcast it to all samples. To assign different class weight to different samples a weight
                         tensor of shape (n_samples,n_classes) must be passed.
-  
+
         Returns:
                        None
         """
-        targets, predictions, weights \
-            = self._preprocess(targets, scores, weights)
-        
+        targets, predictions, weights = self._preprocess(targets, scores, weights)
+
         if self.average_mode == AveragingMode.SAMPLE:
-         
+
             if self._subset_mode:
-                reduce_op = compose(partial(tf.reduce_all, keepdims=True, axis=-1),
-                                    partial(tf.cast, dtype=self.dtype)
-                                    )
+                reduce_op = compose(
+                    partial(tf.reduce_all, keepdims=True, axis=-1),
+                    partial(tf.cast, dtype=self.dtype),
+                )
             else:
-                reduce_op = compose(partial(tf.cast, dtype=self.dtype),
-                                    partial(tf.reduce_mean, keepdims=True, axis=-1))
-            #TODO: verify spreading weights among positive labels
+                reduce_op = compose(
+                    partial(tf.cast, dtype=self.dtype),
+                    partial(tf.reduce_mean, keepdims=True, axis=-1),
+                )
+            # TODO: verify spreading weights among positive labels
             # Further tests needed for this mode.
-            label_weights = (targets * weights) / tf.reduce_sum(targets, axis=-1, keepdims=1)
+            label_weights = (targets * weights) / tf.reduce_sum(
+                targets, axis=-1, keepdims=1
+            )
             hits = reduce_op(predictions == targets)
             weighted_hits = label_weights * hits
             value_sum = tf.cast(tf.reduce_sum(weighted_hits), self.dtype)
             count = tf.cast(tf.reduce_sum(label_weights), self.dtype)
 
             if self._value_sum is None or self._count is None:
-                self._value_sum, self._count = \
-                    self._create_variables(tuple())
+                self._value_sum, self._count = self._create_variables(tuple())
             self._value_sum.assign_add(value_sum)
             self._count.assign_add(count)
-        
+
         elif self.average_mode == AveragingMode.MICRO:
 
             label_weights = tf.ones_like(targets) * weights
@@ -581,26 +642,24 @@ class AccuracyScore(ClassificationMetric):
             weighted_hits = label_weights * hits
             value_sum = tf.cast(tf.reduce_sum(weighted_hits), self.dtype)
             count = tf.cast(tf.reduce_sum(label_weights), self.dtype)
-        
+
             if self._value_sum is None or self._count is None:
-                self._value_sum, self._count = \
-                    self._create_variables(tuple())
+                self._value_sum, self._count = self._create_variables(tuple())
             self._value_sum.assign_add(value_sum)
             self._count.assign_add(count)
-        
+
         else:
-            confusion_matrix, _ = compute_confusion_matrix(targets, predictions,
-                                                           bifurcators=1,
-                                                           weights=weights)
-            tp = confusion_matrix['true_positives'][1:-1]
-            tn = confusion_matrix['true_negatives'][1:-1]
-            fp = confusion_matrix['false_positives'][1:-1]
-            fn = confusion_matrix['false_negatives'][1:-1]
-            
+            confusion_matrix, _ = compute_confusion_matrix(
+                targets, predictions, bifurcators=1, weights=weights
+            )
+            tp = confusion_matrix["true_positives"][1:-1]
+            tn = confusion_matrix["true_negatives"][1:-1]
+            fp = confusion_matrix["false_positives"][1:-1]
+            fn = confusion_matrix["false_negatives"][1:-1]
+
             if self._value_sum is None or self._count is None:
-                self._value_sum, self._count = \
-                    self._create_variables(tf.shape(tp))
-            
+                self._value_sum, self._count = self._create_variables(tf.shape(tp))
+
             # accuracy = TP+TN/(TP+TN+FN_+FP)
             self._value_sum.assign_add(tp + tn)
             self._count.assign_add(tp + tn + fn + fp)
