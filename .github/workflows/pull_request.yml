@@ -39,7 +39,7 @@ jobs:
         with:
           tool_name: BLACK
           github_token:  ${{ secrets.GITHUB_TOKEN }}
-          filter_mode: "diff_context"
+          filter_mode: "nofilter"
           fail_on_error: 'true'
 
 
