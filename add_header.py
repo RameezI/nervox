@@ -9,7 +9,8 @@ import argparse
 from pathlib import Path
 
 name = "Rameez"
-email = "rameez.ismaeel@gmai.com"
+
+email =                "rameez.ismaeel@gmail.com"
 
 HEADER = """\"\"\"
 Copyright (C) 2021 Rameez Ismail - All Rights Reserved

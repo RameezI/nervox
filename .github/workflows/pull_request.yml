@@ -9,11 +9,13 @@ on:
   workflow_dispatch:
 
 
-permissions: write-all
+permissions: 
+  contents: read
+  pull-requests: write
 
 
 jobs:
-  linting:
+  Linter:
     runs-on: ubuntu-latest
 
     steps:
