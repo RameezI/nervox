@@ -36,7 +36,7 @@ def objective_configurer() -> Objective:
     return objective
 
 
-def train(args: argparse.Namespace):
+def trainec(args: argparse.Namespace):
     # data stream for training
     train_stream = DataStream(
         "cifar10",
@@ -109,4 +109,4 @@ def configuration() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    train(configuration())
+    trainec(configuration())
