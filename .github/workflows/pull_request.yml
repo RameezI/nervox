@@ -31,14 +31,12 @@ jobs:
       - name: Run Black
         uses:  psf/black@stable
         id: action_black
-        with:
-          options: "."
 
       - name: Suggest Formating Changes
-        uses: reviewdog/action-suggester@v1
+        uses: reviewdog/action-suggester@v1.18
         with:
           tool_name: BLACK
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token:  ${{ secrets.REVIEWDOG_PR_REVIEW }}
 
 
       # - name: Run Bandit
