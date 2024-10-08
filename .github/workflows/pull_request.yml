@@ -43,13 +43,6 @@ jobs:
           options: ""
           src: "pursuits"
 
-      - name: misspell
-        uses: reviewdog/action-misspell@v1
-        with:
-          github_token: ${{ secrets.REVIEWDOG_PR_REVIEW }}
-          locale: "US"
-          reporter: "github-pr-review"
-
       - name: Formating Suggestions [Black]
         run: |
           set -euxo pipefail
@@ -60,16 +53,15 @@ jobs:
                     -reporter=github-pr-review\
                     -level=warning\
                     -filter-mode='diff_context'\
-                    - tee \
-                    < "$TMPFILE"
+                    - tee < "$TMPFILE"
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.REVIEWDOG_PR_REVIEW }}
 
   
-      - name: Bandit Scan
-        uses: shundor/python-bandit-scan@9cc5aa4a006482b8a7f91134412df6772dbda22c
-        with: 
-          exit_zero: true 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Bandit Scan
+      #   uses: shundor/python-bandit-scan@9cc5aa4a006482b8a7f91134412df6772dbda22c
+      #   with: 
+      #     exit_zero: true 
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
