@@ -59,7 +59,7 @@ jobs:
                     -name=BLACK\
                     -reporter=github-pr-review\
                     -level=warning\
-                    -filter-mode='file'\
+                    -filter-mode='diff_context'\
                     - tee \
                     < "$TMPFILE"
         env:
