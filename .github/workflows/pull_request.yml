@@ -42,17 +42,15 @@ jobs:
         uses:  psf/black@stable
         id: action_black
         with:
-          options: "--check ."
-        continue-on-error: true 
+          options: "."
 
       - name: Formating Suggestions [Black]
         run: |
           set -euxo pipefail
           echo "Running Black"
           TMPFILE=$(mktemp)
-          git status
-          echo "Diff" > diff.txt
-          cat diff.txt
+          git diff > "$TMPFILE"
+          cat  "$TMPFILE"
           reviewdog -f=diff -name=black -reporter=github-pr-check -level=warning < "$TMPFILE"
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
