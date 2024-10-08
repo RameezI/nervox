@@ -32,16 +32,24 @@ jobs:
         uses:  psf/black@stable
         id: action_black
         with:
-          options: "."
+          options: "--check ."
 
-      - name: Suggest Formating Changes
-        uses: reviewdog/action-suggester@v1.18
-        with:
-          tool_name: BLACK
-          github_token:  ${{ secrets.GITHUB_TOKEN }}
-          filter_mode: "nofilter"
-          fail_on_error: 'true'
-          level: 'error'
+      # Step to install Danger and run it for PR commenting
+      - name: Install Danger
+        run: gem install danger
+
+      - name: Run Danger for PR feedback
+        run: bundle exec danger
+
+
+      # - name: Suggest Formating Changes
+      #   uses: reviewdog/action-suggester@v1.18
+      #   with:
+      #     tool_name: BLACK
+      #     github_token:  ${{ secrets.GITHUB_TOKEN }}
+      #     filter_mode: "nofilter"
+      #     fail_on_error: 'true'
+      #     level: 'error'
 
 
       # - name: Run Bandit

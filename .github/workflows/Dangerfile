@@ -1,0 +1,14 @@
+# Dangerfile
+# Run Black in check mode to detect formatting issues
+black_check = `black --check . 2>&1`
+
+# If Black reports unformatted files, Danger will comment on the PR
+if black_check.include?("would reformat")
+  warn("Some files are not formatted correctly with Black.")
+  
+  # Capture the diff using `black --diff`
+  black_diff = `black --diff .`
+
+  # Display the diff in the PR comment
+  markdown("### Black Formatting Issues Detected\n\n```diff\n#{black_diff}\n```")
+end
