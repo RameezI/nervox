@@ -47,7 +47,7 @@ jobs:
 
       - name: Formating Suggestions [Black]
         run: |
-          set -ex
+          set -euxo pipefail
           echo "Running Black"
           TMPFILE=$(mktemp)
           git diff > "$TMPFILE"
