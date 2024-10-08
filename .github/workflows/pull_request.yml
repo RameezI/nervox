@@ -43,8 +43,9 @@ jobs:
       - uses: reviewdog/action-black@v3
         with:
           github_token: ${{ secrets.github_token }}
-          reporter: github-pr-check
+          reporter: github-pr-review
           level: warning
+          black_args: "."
 
 
       # - name: Run Bandit
