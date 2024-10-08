@@ -6,6 +6,7 @@ Email: rameez.ismaeel@gmail.com
 
 import os
 import argparse
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from nervox import Trainer
@@ -14,8 +15,6 @@ from nervox.protocols import Classification
 from nervox.utils import base_parser, VerbosityLevel
 
 from nervox.modules import Module
-
-
 
 
 from nervox.data import DataStream
@@ -29,6 +28,7 @@ from nervox.utils import onehot_transform
 
 def objective_configurer() -> Objective:
     import tensorflow as tf
+
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     xentropy = CrossEntropy(transform=tf.nn.sigmoid)
     accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
