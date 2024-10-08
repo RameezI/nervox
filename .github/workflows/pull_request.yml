@@ -48,7 +48,6 @@ jobs:
         run: |
           set -euxo pipefail
           TMPFILE=$(mktemp)
-          git stash -u && git stash drop || true
           git diff > "$TMPFILE"
           reviewdog -f=diff\
                     -name=BLACK\
