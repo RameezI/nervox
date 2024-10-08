@@ -41,7 +41,7 @@ jobs:
         id: action_black
         with:
           options: ""
-          src: "pursuits"
+          src: "."
 
       - name: Check for Python File Format Changes
         id: format_changes_detected
