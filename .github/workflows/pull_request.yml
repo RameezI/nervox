@@ -60,7 +60,7 @@ jobs:
                     -name=BLACK\
                     -reporter=github-pr-review\
                     -level=warning\
-                    -filter-mode='nofilter'\
+                    -filter-mode='file'\
                     - tee \
                     < "$TMPFILE"
         env:
