@@ -50,7 +50,6 @@ jobs:
           echo "Running Black"
           TMPFILE=$(mktemp)
           git diff > "$TMPFILE"
-          cat  "$TMPFILE"
           reviewdog -f=diff\
                     -name=BLACK\
                     -reporter=github-pr-review\
