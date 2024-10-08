@@ -47,8 +47,8 @@ jobs:
       - name: Formating Suggestions [Black]
         run: |
           set -euxo pipefail
-          echo "Running Black"
           TMPFILE=$(mktemp)
+          git stash -u && git stash drop || true
           git diff > "$TMPFILE"
           reviewdog -f=diff\
                     -name=BLACK\
