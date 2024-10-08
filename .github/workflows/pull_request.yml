@@ -7,11 +7,8 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  checks: write
-  issues: write
-  pull-requests: write
+
+permissions: write-all
 
 
 jobs:
