@@ -28,27 +28,37 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
-      - name: Install Dependencies
+      - name: Install Python dependencies
         run: |
-          python --version
-          python -m pip  install --upgrade pip
-          python -m pip install -e .[dev]
+          python -m pip install --upgrade pip
+          python -m pip install ruff
 
-      - name: Run Black
+      - name: Setup ReviewDog
+        uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
+      - name: Setup Black
         uses:  psf/black@stable
         id: action_black
         with:
           options: "."
-      
 
-      - name: Check for Black Formatter Changes
-        run: git diff
+      - name: Formating Suggestions [Black]
+        run: |
+          set -euxo pipefail
+          echo "Running Black"
+          TMPFILE=$(mktemp)
+          git diff > "$TMPFILE"
+          reviewdog -f=diff\
+                    -name=BLACK\
+                    -reporter=github-pr-review\
+                    -level=warning\
+                    < "$TMPFILE"
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.REVIEWDOG_PR_REVIEW }}
 
-      - name: Suggest Formating Changes
-        uses: reviewdog/action-suggester@v1.18
-        with:
-          tool_name: BLACK
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+
 
 
       # - name: Run Bandit
