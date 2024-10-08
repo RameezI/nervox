@@ -53,6 +53,7 @@ jobs:
           reviewdog -f=diff\
                     -name=BLACK\
                     -reporter=github-pr-review\
+                    -filter-mode=nofilter\
                     -level=warning\
                     < "$TMPFILE"
         env:
