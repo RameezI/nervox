@@ -3,8 +3,10 @@ Copyright (C) 2021 Rameez Ismail - All Rights Reserved
 Author: Rameez Ismail
 Email: rameez.ismaeel@gmail.com
 """
+
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import tensorflow as tf
 from nervox.data import DataStream
 from nervox.modules.vision_decoders import MLDecoder
@@ -18,12 +20,19 @@ def convert_to_tensors(*args):
 
 
 class TestMlDecoder(tf.test.TestCase):
-    
+
     def test_invocation(self):
         x = tf.random.normal((32, 14, 14, 1280))
-        ml_decoder = MLDecoder(output_units=555, num_of_groups=111, embedding_dim=768,
-                               n_heads=8, dim_feedforward=2048, dropout_rate_attention=0.1, num_layers=1,
-                               data_format='channels_last')
+        ml_decoder = MLDecoder(
+            output_units=555,
+            num_of_groups=111,
+            embedding_dim=768,
+            n_heads=8,
+            dim_feedforward=2048,
+            dropout_rate_attention=0.1,
+            num_layers=1,
+            data_format="channels_last",
+        )
         out = ml_decoder(x)
         print(out.shape)
 

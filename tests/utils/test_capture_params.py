@@ -13,7 +13,9 @@ class TestCaptureParams(tf.test.TestCase):
         my_obj.my_method(arg1="value1", arg2="value2")
 
         my_config = my_obj.params["my_method"]
-        self.assertEqual(my_config, {"arg1": "value1", "arg2": "value2", "arg3": "default"})
+        self.assertEqual(
+            my_config, {"arg1": "value1", "arg2": "value2", "arg3": "default"}
+        )
 
     def test_capture_params_with_kwargs(self):
         class MyClass:

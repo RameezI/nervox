@@ -174,9 +174,11 @@ class CheckPointer(Callback):
         self._current_epoch = tf.Variable(0, dtype=tf.int64, trainable=False)
         self._progress_bar = kwargs.get("progress_bar", None)
 
-        os.makedirs(str(self.checkpoint_dir)) if not os.path.exists(
-            self.checkpoint_dir
-        ) else None
+        (
+            os.makedirs(str(self.checkpoint_dir))
+            if not os.path.exists(self.checkpoint_dir)
+            else None
+        )
 
         if mode not in ["auto", "min", "max"]:
             logging.warning(
@@ -241,9 +243,11 @@ class CheckPointer(Callback):
                 if self._progress_bar is not None:
                     self._progress_bar.ckpt_statement = {"is_ckpt": True}
                 else:
-                    print(
-                        f"checkpoint: {self.best}-->{current}!"
-                    ) if not self.silent else None
+                    (
+                        print(f"checkpoint: {self.best}-->{current}!")
+                        if not self.silent
+                        else None
+                    )
                 self.best = current
         else:
             self.ckpt_manager.save()
@@ -263,6 +267,7 @@ class CSVLogger(Callback):
 
 class ProgressParaphraser(Callback):
     """Callback that prints (formatted) progress and metrics to stdout."""
+
     def __init__(
         self,
         progress_bar: ProgressBar,
@@ -277,9 +282,11 @@ class ProgressParaphraser(Callback):
         # get max epochs and set the progress bar accordingly
         max_epochs = logs.pop("max_epochs", np.nan)
         self._progress_bar.max_epochs = max_epochs
-        print(f"Initiating Train/Validate Cycle: ", end="") if self.verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+        (
+            print(f"Initiating Train/Validate Cycle: ", end="")
+            if self.verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
 
     def on_epoch_begin(self, epoch, logs: Union[None, Dict[str, Number]] = None):
         # prepare statement
@@ -307,9 +314,11 @@ class ProgressParaphraser(Callback):
             "step_count": step_count,
             "samples_done": samples_done,
         }
-        print(f"\r{self._progress_bar}", end="") if self.verbose in [
-            VerbosityLevel.UPDATE_AT_BATCH
-        ] else None
+        (
+            print(f"\r{self._progress_bar}", end="")
+            if self.verbose in [VerbosityLevel.UPDATE_AT_BATCH]
+            else None
+        )
 
     def on_test_batch_end(
         self, batch_index, logs: Union[None, Dict[str, Number]] = None
@@ -324,19 +333,25 @@ class ProgressParaphraser(Callback):
             "step_count": step_count,
             "samples_done": samples_done,
         }
-        print(f"\r{self._progress_bar}", end="") if self.verbose in [
-            VerbosityLevel.UPDATE_AT_BATCH
-        ] else None
+        (
+            print(f"\r{self._progress_bar}", end="")
+            if self.verbose in [VerbosityLevel.UPDATE_AT_BATCH]
+            else None
+        )
 
     def on_test_end(self, logs: Union[None, Dict[str, Number]] = None):
-        print(f"\r{self._progress_bar}", end="") if self.verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+        (
+            print(f"\r{self._progress_bar}", end="")
+            if self.verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
 
     def on_epoch_end(self, epoch, logs=None):
         self._progress_bar.epoch = epoch
         self._progress_bar.train_samples = logs.get("samples/train", np.nan)
         self._progress_bar.eval_samples = logs.get("samples/eval", np.nan)
-        print(f"\r{self._progress_bar}", end="") if self.verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+        (
+            print(f"\r{self._progress_bar}", end="")
+            if self.verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
