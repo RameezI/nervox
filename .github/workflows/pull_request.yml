@@ -54,10 +54,10 @@ jobs:
           fi
 
       - name: Create Pull Request
-        if: steps.format_changes_detected.outputs.python_changes == 'false'
+        if: steps.format_changes_detected.outputs.python_changes == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.REVIEWDOG_PR_REVIEW }}
           title: "Format Python code with psf/black push"
           commit-message: ":art: Format Python code with psf/black"
           body: |
