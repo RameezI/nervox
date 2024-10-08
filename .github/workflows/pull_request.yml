@@ -45,7 +45,7 @@ jobs:
       - name: misspell
         uses: reviewdog/action-misspell@v1
         with:
-          github_token: ${{ secrets.github_token }}
+          github_token: ${{ secrets.REVIEWDOG_PR_REVIEW }}
           locale: "US"
           reporter: "github-pr-review"
 
@@ -54,6 +54,7 @@ jobs:
           set -euxo pipefail
           TMPFILE=$(mktemp)
           git diff > "$TMPFILE"
+          cat "$TMPFILE"
           reviewdog -f=diff\
                     -name=BLACK\
                     -reporter=github-pr-review\
