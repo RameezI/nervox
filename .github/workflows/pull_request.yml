@@ -34,11 +34,17 @@ jobs:
         with:
           options: "."
 
-      - name: Suggest Formating Changes
-        uses: reviewdog/action-suggester@v1.18
+      # - name: Suggest Formating Changes
+      #   uses: reviewdog/action-suggester@v1.18
+      #   with:
+      #     tool_name: BLACK
+      #     github_token:  ${{ secrets.REVIEWDOG_PR_REVIEW }}
+
+      - uses: reviewdog/action-black@v3
         with:
-          tool_name: BLACK
-          github_token:  ${{ secrets.REVIEWDOG_PR_REVIEW }}
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
 
 
       # - name: Run Bandit
