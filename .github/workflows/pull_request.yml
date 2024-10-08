@@ -42,7 +42,8 @@ jobs:
         uses:  psf/black@stable
         id: action_black
         with:
-          options: "src pursuits"
+          options: "."
+          src: "pursuits"
 
       - name: Formating Suggestions [Black]
         run: |
