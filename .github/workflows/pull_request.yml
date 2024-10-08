@@ -31,6 +31,8 @@ jobs:
       - name: Run Black
         uses:  psf/black@stable
         id: action_black
+        with:
+          args: .
 
       - name: Suggest Formating Changes
         uses: reviewdog/action-suggester@v1.18
