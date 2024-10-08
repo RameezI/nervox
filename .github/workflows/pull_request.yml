@@ -50,7 +50,6 @@ jobs:
           echo "Running Black"
           TMPFILE=$(mktemp)
           git diff > "$TMPFILE"
-          git stash -u && git stash drop
           reviewdog -f=diff -name=black -reporter=github-pr-check -level=warning < "$TMPFILE"
 
          
