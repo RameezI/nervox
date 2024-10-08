@@ -35,9 +35,12 @@ jobs:
           options: "--check ."
         continue-on-error: true 
 
-      # Step to install Danger and run it for PR commenting
       - name: Install Danger
-        run: gem install danger
+        run: |
+          gem install bundler
+          bundle init
+          echo "gem 'danger'" >> Gemfile
+          bundle install
 
       - name: Run Danger for PR feedback
         run: bundle exec danger
