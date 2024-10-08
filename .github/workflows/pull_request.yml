@@ -66,23 +66,11 @@ jobs:
           base: ${{ github.head_ref }} # Creates pull request onto pull request or commit branch
           branch: actions/black
 
-      - name: Formating Suggestions [Black]
-        run: |
-          set -euxo pipefail
-          TMPFILE=$(mktemp)
-          git diff > "$TMPFILE"
-          reviewdog -f=diff\
-                    -name=BLACK\
-                    -reporter=github-pr-review\
-                    -level=warning < "$TMPFILE"
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.ACTION_PULL_REQUEST }}
-
   
-      # - name: Bandit Scan
-      #   uses: shundor/python-bandit-scan@9cc5aa4a006482b8a7f91134412df6772dbda22c
-      #   with: 
-      #     exit_zero: true 
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Bandit Scan
+        uses: shundor/python-bandit-scan@9cc5aa4a006482b8a7f91134412df6772dbda22c
+        with: 
+          exit_zero: true 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
