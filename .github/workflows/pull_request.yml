@@ -53,7 +53,7 @@ jobs:
           cat  "$TMPFILE"
           reviewdog -f=diff\
                     -name=BLACK\
-                    -reporter=github-pr-check\
+                    -reporter=github-pr-review\
                     -fail-on-error=true\
                     -level=warning\
                     < "$TMPFILE"
