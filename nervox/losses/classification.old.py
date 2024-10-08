@@ -27,15 +27,17 @@ def reduce_weighted_loss(weighted_losses, reduction=Reduction.SUM_OVER_BATCH_SIZ
 
 
 @tf.__internal__.dispatch.add_dispatch_support
-def binary_cross_entropy(y_true: TensorLike, y_pred: TensorLike,
-                         weights: Union[None, TensorLike] = None,
-                         label_smoothing: float = 0.0,
-                         gamma_neg: float = 0.0,
-                         gamma_pos: float = 0.0,
-                         focus_credit_pos: float = 0.0,
-                         focus_credit_neg: float = 0.0,
-                         from_logits=True,
-                         ):
+def binary_cross_entropy(
+    y_true: TensorLike,
+    y_pred: TensorLike,
+    weights: Union[None, TensorLike] = None,
+    label_smoothing: float = 0.0,
+    gamma_neg: float = 0.0,
+    gamma_pos: float = 0.0,
+    focus_credit_pos: float = 0.0,
+    focus_credit_neg: float = 0.0,
+    from_logits=True,
+):
     """Computes the binary cross entropy loss.
     Standalone usage:
     >>> y_true = [[0, 1], [0, 0]]
@@ -80,34 +82,36 @@ def binary_cross_entropy(y_true: TensorLike, y_pred: TensorLike,
     Returns:
       Binary cross entropy loss value. shape = `[batch_size, d0, .. dN-1]`.
     """
-    
+
     if label_smoothing:
         y_true = y_true * (1.0 - label_smoothing) + 0.5 * label_smoothing
-    
+
     if from_logits:
         bce = tf.nn.sigmoid_cross_entropy_with_logits(labels=y_true, logits=y_pred)
-    
+
     else:
         epsilon_ = tf.constant(np.finfo(float).eps, y_pred.dtype)
-        y_true = tf.clip_by_value(y_true, epsilon_, 1. - epsilon_)
+        y_true = tf.clip_by_value(y_true, epsilon_, 1.0 - epsilon_)
         bce = y_true * tf.math.log(y_pred + epsilon_)
         bce += (1 - y_true) * tf.math.log(1 - y_true + epsilon_)
         bce = -bce
-    
+
     if weights is not None:
         bce = bce * weights
-    
+
     bce = tf.reduce_mean(bce, -1)
     return bce
 
 
 @tf.__internal__.dispatch.add_dispatch_support
-def cross_entropy(y_true: TensorLike, y_pred: TensorLike,
-                  weights: Union[None, TensorLike] = None,
-                  label_smoothing: float = 0.0,
-                  from_logits=True,
-                  axis=-1
-                  ):
+def cross_entropy(
+    y_true: TensorLike,
+    y_pred: TensorLike,
+    weights: Union[None, TensorLike] = None,
+    label_smoothing: float = 0.0,
+    from_logits=True,
+    axis=-1,
+):
     """Computes the binary cross entropy loss.
     Standalone usage:
     >>> y_true = [[0, 1], [0, 0]]
@@ -128,106 +132,135 @@ def cross_entropy(y_true: TensorLike, y_pred: TensorLike,
     Returns:
       Binary cross entropy loss value. shape = `[batch_size, d0, .. dN-1]`.
     """
-    
+
     if label_smoothing:
         num_classes = tf.cast(tf.shape(y_true)[-1], y_pred.dtype)
         y_true = y_true * (1.0 - label_smoothing) + (label_smoothing / num_classes)
-    
+
     if from_logits:
-        xentropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_true, logits=y_pred,
-                                                           axis=axis)
-    
+        xentropy = tf.nn.softmax_cross_entropy_with_logits(
+            labels=y_true, logits=y_pred, axis=axis
+        )
+
     else:
         epsilon_ = tf.constant(np.finfo(float).eps, y_pred.dtype)
         y_pred = y_pred / tf.reduce_sum(y_pred, axis=axis, keepdims=True)
-        output = tf.clip_by_value(y_pred, epsilon_, 1. - epsilon_)
+        output = tf.clip_by_value(y_pred, epsilon_, 1.0 - epsilon_)
         xentropy = -tf.reduce_sum(y_true * tf.math.log(output), axis)
-    
+
     if weights is not None:
         xentropy = xentropy * weights
     xentropy = tf.reduce_mean(xentropy, -1)
-    
+
     return xentropy
 
 
 class BinaryCrossEntropy(Loss):
-    def __init__(self, from_logits: bool = True, label_smoothing=0.0,
-                 reduction=Reduction.AUTO, name='binary_cross_entropy'):
+    def __init__(
+        self,
+        from_logits: bool = True,
+        label_smoothing=0.0,
+        reduction=Reduction.AUTO,
+        name="binary_cross_entropy",
+    ):
         """Initializes `BinaryCrossEntropy` instance.
-          Args:
-            from_logits:        Whether to interpret `y_pred` as a tensor of logits or probabilities.
-                                Default value for `from_logits` is `True`
+        Args:
+          from_logits:        Whether to interpret `y_pred` as a tensor of logits or probabilities.
+                              Default value for `from_logits` is `True`
 
-            label_smoothing:    Float in [0, 1]. When 0, no smoothing occurs. When > 0,
-                                we compute the loss between the predicted labels and a smoothed version
-                                of the true labels, where the smoothing squeezes the labels towards 0.5.
-                                Larger values of `label_smoothing` correspond to heavier smoothing.
+          label_smoothing:    Float in [0, 1]. When 0, no smoothing occurs. When > 0,
+                              we compute the loss between the predicted labels and a smoothed version
+                              of the true labels, where the smoothing squeezes the labels towards 0.5.
+                              Larger values of `label_smoothing` correspond to heavier smoothing.
 
-            reduction:          Type of `tf.keras.losses.Reduction` to apply to
-                                loss. Default value is `AUTO`. `AUTO` indicates that the reduction
-                                option will be determined by the usage context. For almost all cases
-                                this defaults to `SUM_OVER_BATCH_SIZE`.
+          reduction:          Type of `tf.keras.losses.Reduction` to apply to
+                              loss. Default value is `AUTO`. `AUTO` indicates that the reduction
+                              option will be determined by the usage context. For almost all cases
+                              this defaults to `SUM_OVER_BATCH_SIZE`.
 
-            name:               Name for the op. Defaults to 'binary_cross_entropy'.
-          """
+          name:               Name for the op. Defaults to 'binary_cross_entropy'.
+        """
         super().__init__(reduction, name)
         self.from_logits = from_logits
         self.label_smoothing = label_smoothing
-    
-    def __call__(self, y_true: TensorLike, y_pred: TensorLike,
-                 class_weights: TensorLike = None,
-                 sample_weights: TensorLike = None):
-        losses = binary_cross_entropy(y_true, y_pred,
-                                      weights=class_weights,
-                                      from_logits=self.from_logits,
-                                      label_smoothing=self.label_smoothing)
-        
-        weighted_losses = losses * sample_weights \
-            if sample_weights is not None else losses
-        
+
+    def __call__(
+        self,
+        y_true: TensorLike,
+        y_pred: TensorLike,
+        class_weights: TensorLike = None,
+        sample_weights: TensorLike = None,
+    ):
+        losses = binary_cross_entropy(
+            y_true,
+            y_pred,
+            weights=class_weights,
+            from_logits=self.from_logits,
+            label_smoothing=self.label_smoothing,
+        )
+
+        weighted_losses = (
+            losses * sample_weights if sample_weights is not None else losses
+        )
+
         reduced_loss = reduce_weighted_loss(weighted_losses)
         return reduced_loss
 
 
 class CrossEntropy(Loss):
-    def __init__(self, from_logits: bool = True, label_smoothing=0.0, sparse_labels=False,
-                 reduction=Reduction.AUTO, name='cross_entropy'):
+    def __init__(
+        self,
+        from_logits: bool = True,
+        label_smoothing=0.0,
+        sparse_labels=False,
+        reduction=Reduction.AUTO,
+        name="cross_entropy",
+    ):
         """Initializes `CrossEntropy` instance.
-          Args:
-            from_logits:        Whether to interpret `y_pred` as a tensor of logits or probabilities.
-                                Default value for `from_logits` is `True`
+        Args:
+          from_logits:        Whether to interpret `y_pred` as a tensor of logits or probabilities.
+                              Default value for `from_logits` is `True`
 
-            label_smoothing:    Float in [0, 1]. When 0, no smoothing occurs. When > 0,
-                                we compute the loss between the predicted labels and a smoothed version
-                                of the true labels, where the smoothing squeezes the labels towards 0.5.
-                                Larger values of `label_smoothing` correspond to heavier smoothing.
+          label_smoothing:    Float in [0, 1]. When 0, no smoothing occurs. When > 0,
+                              we compute the loss between the predicted labels and a smoothed version
+                              of the true labels, where the smoothing squeezes the labels towards 0.5.
+                              Larger values of `label_smoothing` correspond to heavier smoothing.
 
-            reduction:          Type of `tf.keras.losses.Reduction` to apply to
-                                loss. Default value is `AUTO`. `AUTO` indicates that the reduction
-                                option will be determined by the usage context. For almost all cases
-                                this defaults to `SUM_OVER_BATCH_SIZE`.
+          reduction:          Type of `tf.keras.losses.Reduction` to apply to
+                              loss. Default value is `AUTO`. `AUTO` indicates that the reduction
+                              option will be determined by the usage context. For almost all cases
+                              this defaults to `SUM_OVER_BATCH_SIZE`.
 
-            name:               Name for the op. Defaults to 'binary_cross_entropy'.
-          """
+          name:               Name for the op. Defaults to 'binary_cross_entropy'.
+        """
         super().__init__(reduction, name)
         self.from_logits = from_logits
         self.label_smoothing = label_smoothing
         self.sparse_labels = sparse_labels
-    
-    def __call__(self, y_true: TensorLike, y_pred: TensorLike,
-                 class_weights: TensorLike = None,
-                 sample_weights: TensorLike = None):
+
+    def __call__(
+        self,
+        y_true: TensorLike,
+        y_pred: TensorLike,
+        class_weights: TensorLike = None,
+        sample_weights: TensorLike = None,
+    ):
         if self.sparse_labels:
             raise NotImplementedError
-        
-        losses = cross_entropy(y_true, y_pred, weights=class_weights,
-                               from_logits=self.from_logits,
-                               label_smoothing=self.label_smoothing,
-                               axis=-1)
-        
-        weighted_losses = losses * sample_weights \
-            if sample_weights is not None else losses
-        
+
+        losses = cross_entropy(
+            y_true,
+            y_pred,
+            weights=class_weights,
+            from_logits=self.from_logits,
+            label_smoothing=self.label_smoothing,
+            axis=-1,
+        )
+
+        weighted_losses = (
+            losses * sample_weights if sample_weights is not None else losses
+        )
+
         reduced_loss = reduce_weighted_loss(weighted_losses)
         return reduced_loss
 
@@ -273,18 +306,22 @@ class HammingLoss(Loss):
 
 
 class CumulativeMAE(tf.keras.losses.Loss):
-    
+
     def get_config(self):
-        return getattr(self, 'params', dict())
-    
+        return getattr(self, "params", dict())
+
     @capture_params
     def __init__(self, accumulation_axis=-1, **kwargs):
-        super().__init__(name=kwargs.pop('name', None))
+        super().__init__(name=kwargs.pop("name", None))
         self.axis = accumulation_axis
         self.tf2_mae_loss = tf.keras.losses.MeanAbsoluteError(**kwargs)
-    
-    def call(self, y_true: TensorLike, y_pred: TensorLike,
-             sample_weight: Union[None, TensorLike] = None) -> tf.Tensor:
+
+    def call(
+        self,
+        y_true: TensorLike,
+        y_pred: TensorLike,
+        sample_weight: Union[None, TensorLike] = None,
+    ) -> tf.Tensor:
         """Computes cumulative mae loss.
         Args:
             y_true: actual target value.

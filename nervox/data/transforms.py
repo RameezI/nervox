@@ -9,20 +9,25 @@ from typing import Union, Tuple
 from nervox.data import Transform
 from nervox.utils import capture_params
 import tensorflow_addons as tfa
+
 ResizeMethod = tf.image.ResizeMethod
 
 
 class Shuffle:
     @capture_params
-    def __init__(self, buffer_size: int = 2048, seed=None,
-                 reshuffle_each_iteration=False):
+    def __init__(
+        self, buffer_size: int = 2048, seed=None, reshuffle_each_iteration=False
+    ):
         self.buffer_size = buffer_size
         self.seed = None
         self.reshuffle_each_iteration = reshuffle_each_iteration
-    
+
     def __call__(self, dataset):
-        return dataset.shuffle(self.buffer_size, seed=self.seed,
-                               reshuffle_each_iteration=self.reshuffle_each_iteration)
+        return dataset.shuffle(
+            self.buffer_size,
+            seed=self.seed,
+            reshuffle_each_iteration=self.reshuffle_each_iteration,
+        )
 
 
 class Cache:
@@ -34,52 +39,58 @@ class Prefetch:
     @capture_params
     def __init__(self, buffer_len=tf.data.AUTOTUNE):
         self.buffer_len = buffer_len
-    
+
     def __call__(self, dataset):
         return dataset.prefetch(self.buffer_len)
 
 
 class Normalize(Transform):
-    def __init__(self, mean=0.0, std=1.0, keys=('image',),
-                 num_parallel_calls=tf.data.AUTOTUNE) -> None:
+    def __init__(
+        self, mean=0.0, std=1.0, keys=("image",), num_parallel_calls=tf.data.AUTOTUNE
+    ) -> None:
         self.mean = tf.constant(mean)
         self.std = tf.constant(std)
         self.keys = keys
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
         for key in self.keys:
-            batch.update({key: (tf.cast(batch[key], tf.float32) - self.mean) / self.std})
+            batch.update(
+                {key: (tf.cast(batch[key], tf.float32) - self.mean) / self.std}
+            )
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, num_parallel_calls=self.num_parallel_calls)
 
 
 class DropRemainder:
     @capture_params
-    def __init__(self, batch_size, key='image', batch_first=True) -> None:
+    def __init__(self, batch_size, key="image", batch_first=True) -> None:
         self.key = key
         self.batch_size = batch_size
         self.batch_first = batch_first
-    
+
     def filter(self, batch):
         axis = 0 if self.batch_first else -1
         is_proper_size = tf.math.equal(tf.shape(batch[self.key])[axis], self.batch_size)
         return is_proper_size
-    
+
     def __call__(self, dataset):
         return dataset.filter(self.filter)
 
 
 class TakeSingleImage:
     @capture_params
-    def __init__(self, index: Union[int, None] = None,
-                 input_key: str = 'video',
-                 output_key: str = 'image',
-                 drop_input_key: bool = True,
-                 num_parallel_calls=tf.data.AUTOTUNE,
-                 **kwargs) -> None:
+    def __init__(
+        self,
+        index: Union[int, None] = None,
+        input_key: str = "video",
+        output_key: str = "image",
+        drop_input_key: bool = True,
+        num_parallel_calls=tf.data.AUTOTUNE,
+        **kwargs,
+    ) -> None:
         """
         Extracts a single image, from a sequence of images, and adds it as an additional feature to the batch
         Args:
@@ -93,178 +104,198 @@ class TakeSingleImage:
         self.input_key = input_key
         self.output_key = output_key
         self.drop_input_key = drop_input_key
-        self.index_limit = kwargs.pop('index_limit', None)
+        self.index_limit = kwargs.pop("index_limit", None)
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
-        seq_len = int(tf.shape(batch[self.input_key])[1]) \
-            if self.index_limit is None else self.index_limit
-        index = self.image_index if self.image_index is not None \
+        seq_len = (
+            int(tf.shape(batch[self.input_key])[1])
+            if self.index_limit is None
+            else self.index_limit
+        )
+        index = (
+            self.image_index
+            if self.image_index is not None
             else tf.random.uniform((), minval=0, maxval=seq_len, dtype=tf.int32)
+        )
         batch[self.output_key] = batch[self.input_key][:, index, :, :, :]
-        batch.pop('video') if self.drop_input_key else None
+        batch.pop("video") if self.drop_input_key else None
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, num_parallel_calls=self.num_parallel_calls)
 
 
 class OneHotLabels:
     @capture_params
-    def __init__(self, num_labels=10, keys=('label',),
-                 num_parallel_calls=tf.data.AUTOTUNE) -> None:
+    def __init__(
+        self, num_labels=10, keys=("label",), num_parallel_calls=tf.data.AUTOTUNE
+    ) -> None:
         self.keys = keys
         self.num_labels = num_labels
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
         for key in self.keys:
-            batch.update({key: tf.one_hot(tf.cast(batch[key], tf.int32), self.num_labels)})
+            batch.update(
+                {key: tf.one_hot(tf.cast(batch[key], tf.int32), self.num_labels)}
+            )
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, num_parallel_calls=self.num_parallel_calls)
 
 
 class SupervisedSignal:
     @capture_params
-    def __init__(self, keys=('image', 'label'),
-                 num_parallel_calls=tf.data.AUTOTUNE) -> None:
+    def __init__(
+        self, keys=("image", "label"), num_parallel_calls=tf.data.AUTOTUNE
+    ) -> None:
         self.supervised_keys = keys
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
         batch = batch[self.supervised_keys[0]], batch[self.supervised_keys[1]]
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, num_parallel_calls=self.num_parallel_calls)
 
 
 class Resize:
     @capture_params
-    def __init__(self, size, input_key='image', method: ResizeMethod = ResizeMethod.BILINEAR,
-                 preserve_aspect_ratio: bool = False, antialias: bool = False,
-                 num_parallel_calls=tf.data.AUTOTUNE) -> None:
+    def __init__(
+        self,
+        size,
+        input_key="image",
+        method: ResizeMethod = ResizeMethod.BILINEAR,
+        preserve_aspect_ratio: bool = False,
+        antialias: bool = False,
+        num_parallel_calls=tf.data.AUTOTUNE,
+    ) -> None:
         self.key = input_key
         self.size = size
         self.method = method
         self.preserve_aspect_ratio = preserve_aspect_ratio
         self.antialias = antialias
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
-        out_images = tf.image.resize(batch[self.key], self.size,
-                                     method=self.method,
-                                     preserve_aspect_ratio=self.preserve_aspect_ratio,
-                                     antialias=self.antialias)
+        out_images = tf.image.resize(
+            batch[self.key],
+            self.size,
+            method=self.method,
+            preserve_aspect_ratio=self.preserve_aspect_ratio,
+            antialias=self.antialias,
+        )
         batch.update({self.key: out_images})
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, num_parallel_calls=self.num_parallel_calls)
 
 
 class RandomCropWithPadding:
     @capture_params
-    def __init__(self, image_size: Union[int, Tuple[int, int]],
-                 padding_size: Union[int, Tuple[int, int]] = 0,
-                 input_key='image',
-                 num_parallel_calls=tf.data.AUTOTUNE) -> None:
+    def __init__(
+        self,
+        image_size: Union[int, Tuple[int, int]],
+        padding_size: Union[int, Tuple[int, int]] = 0,
+        input_key="image",
+        num_parallel_calls=tf.data.AUTOTUNE,
+    ) -> None:
         """
         Args:
             image_size:
             padding_size:
             input_key:
         """
-        
+
         self.key = input_key
         if isinstance(image_size, int):
             image_size = (image_size, image_size)
         if isinstance(padding_size, int):
             padding_size = (padding_size, padding_size)
-        
+
         if len(padding_size) == 2:
             self.pad_rows = padding_size[0]
             self.pad_cols = padding_size[1]
         else:
             raise ValueError
-        
+
         if len(image_size) == 2:
             self.image_height = image_size[0]
             self.image_width = image_size[1]
         else:
             raise ValueError
-        
+
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
         padded_height = self.image_height + int(2 * self.pad_rows)
         padded_width = self.image_width + int(2 * self.pad_cols)
-        padded_image = tf.image.pad_to_bounding_box(batch[self.key],
-                                                    self.pad_rows, self.pad_cols,
-                                                    padded_height, padded_width)
-        y = tf.random.uniform(shape=[], minval=0, maxval=self.pad_rows,
-                              dtype=tf.int32)
-        x = tf.random.uniform(shape=[], minval=0, maxval=self.pad_cols,
-                              dtype=tf.int32)
-        output_image = tf.image.crop_to_bounding_box(padded_image, y, x,
-                                                     self.image_height,
-                                                     self.image_width)
+        padded_image = tf.image.pad_to_bounding_box(
+            batch[self.key], self.pad_rows, self.pad_cols, padded_height, padded_width
+        )
+        y = tf.random.uniform(shape=[], minval=0, maxval=self.pad_rows, dtype=tf.int32)
+        x = tf.random.uniform(shape=[], minval=0, maxval=self.pad_cols, dtype=tf.int32)
+        output_image = tf.image.crop_to_bounding_box(
+            padded_image, y, x, self.image_height, self.image_width
+        )
         batch.update({self.key: output_image})
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, num_parallel_calls=self.num_parallel_calls)
 
 
 class RandomHorizontalFlip:
     @capture_params
-    def __init__(self, input_key='image',
-                 num_parallel_calls=tf.data.AUTOTUNE) -> None:
+    def __init__(self, input_key="image", num_parallel_calls=tf.data.AUTOTUNE) -> None:
         self.key = input_key
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
         output_image = tf.image.random_flip_left_right(batch[self.key])
         batch.update({self.key: output_image})
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, num_parallel_calls=self.num_parallel_calls)
 
 
 class RandomVerticalFlip:
     @capture_params
-    def __init__(self, input_key='image',
-                 num_parallel_calls=tf.data.AUTOTUNE) -> None:
+    def __init__(self, input_key="image", num_parallel_calls=tf.data.AUTOTUNE) -> None:
         self.key = input_key
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
         output_image = tf.image.random_flip_up_down(batch[self.key])
         batch.update({self.key: output_image})
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, num_parallel_calls=self.num_parallel_calls)
 
 
 class RandomCutout:
     @capture_params
-    def __init__(self, cutout_size, input_key='image',
-                 num_parallel_calls=tf.data.AUTOTUNE) -> None:
+    def __init__(
+        self, cutout_size, input_key="image", num_parallel_calls=tf.data.AUTOTUNE
+    ) -> None:
         self.key = input_key
         self.cutout_size = cutout_size
         self.num_parallel_calls = num_parallel_calls
-    
+
     def transform(self, batch):
         output_image = tfa.image.random_cutout(batch[self.key], self.cutout_size)
         batch.update({self.key: output_image})
         return batch
-    
+
     def __call__(self, dataset):
         return dataset.map(self.transform, self.num_parallel_calls)
+
 
 # @tf.function
 # def _norm_params(mask_size, offset=None):

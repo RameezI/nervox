@@ -64,6 +64,8 @@ logger.setLevel(logging.DEBUG)
 # Aliases
 CallbackList = tf.keras.callbacks.CallbackList
 margin = 0
+
+
 class Trainer:
     # TensorFlow Distribution Schemes Validated by the nervox trainer
     named_distribution_schemes = {
@@ -548,13 +550,17 @@ class Trainer:
         self.write_config_to_disk()
 
         # Printing the configuration
-        print(f"\n{'':-<{self._progress_bar.terminal_size - margin}}") if verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
-        print(f"\n{self.name}/{self.run_id}:") 
-        print(json.dumps(self.to_json(), indent=4)) if verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+        (
+            print(f"\n{'':-<{self._progress_bar.terminal_size - margin}}")
+            if verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
+        print(f"\n{self.name}/{self.run_id}:")
+        (
+            print(json.dumps(self.to_json(), indent=4))
+            if verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
 
         try:
             # Profile the underlying predict method to estimate Flops & Parameters
@@ -588,9 +594,11 @@ class Trainer:
         if not kwargs.pop("skip_initial_evaluation", False):
             self._progress_bar.mode = ModeProgressBar.EVAL_ONLY
             split_name = eval_stream.split_name
-            print(f"Evaluation on the `{split_name}` split:") if verbose not in [
-                VerbosityLevel.KEEP_SILENT
-            ] else None
+            (
+                print(f"Evaluation on the `{split_name}` split:")
+                if verbose not in [VerbosityLevel.KEEP_SILENT]
+                else None
+            )
 
             samples_init_eval = (
                 self._eval_samples_count if do_validation else self._train_samples_count
@@ -609,17 +617,23 @@ class Trainer:
         # if warm_start and os.path.isfile(Path(self.checkpoint_dir, 'checkpoint')):
         #     ckpt_load_status.assert_consumed()
 
-        print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}") if verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+        (
+            print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}")
+            if verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
 
         if self._epoch.value() >= max_epochs:
-            print(
-                f"Exiting ...\n"
-                f"The maximum epochs have already been reached.\n"
-                f"Restored epoch == {int(self._epoch.value())}\n"
-                f"Allowed epochs == {max_epochs}\n"
-            ) if verbose not in [VerbosityLevel.KEEP_SILENT] else None
+            (
+                print(
+                    f"Exiting ...\n"
+                    f"The maximum epochs have already been reached.\n"
+                    f"Restored epoch == {int(self._epoch.value())}\n"
+                    f"Allowed epochs == {max_epochs}\n"
+                )
+                if verbose not in [VerbosityLevel.KEEP_SILENT]
+                else None
+            )
             callbacks.on_train_end()
         else:
             start_epoch = int(self._epoch.assign_add(1).value())
@@ -674,9 +688,11 @@ class Trainer:
                 )
             callbacks.on_train_end()
 
-            print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}\n") if verbose not in [
-                VerbosityLevel.KEEP_SILENT
-            ] else None
+            (
+                print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}\n")
+                if verbose not in [VerbosityLevel.KEEP_SILENT]
+                else None
+            )
 
     def to_json(self):
         config = {
@@ -684,11 +700,11 @@ class Trainer:
             "name": self.name,
             "run_id": self.run_id,
             "data_streams": {
-                key: getattr(value, 'params') if value is not None else None
+                key: getattr(value, "params") if value is not None else None
                 for key, value in self._data_streams.items()
             },
             "models": {
-                key: getattr(value, 'params') if value is not None else None
+                key: getattr(value, "params") if value is not None else None
                 for key, value in self.models.items()
             },
             "checkpointer": self._checkpointer_config,
