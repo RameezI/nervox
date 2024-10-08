@@ -32,7 +32,7 @@ jobs:
         uses:  psf/black@stable
         id: action_black
         with:
-          args: .
+          options: "."
 
       - name: Suggest Formating Changes
         uses: reviewdog/action-suggester@v1.18
