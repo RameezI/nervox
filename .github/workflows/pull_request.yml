@@ -28,6 +28,12 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v2
+        with:
+          ruby-version: '3.0.2'
+
+
       - name: Run Black
         uses:  psf/black@stable
         id: action_black
@@ -35,15 +41,10 @@ jobs:
           options: "--check ."
         continue-on-error: true 
 
-      - name: Install Danger
-        run: |
-          gem install bundler
-          bundle init
-          echo "gem 'danger'" >> Gemfile
-          bundle install
 
-      - name: Run Danger for PR feedback
-        run: bundle exec danger
+      - uses: MeilCli/danger-action@v6
+        env:
+          DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
 
 
