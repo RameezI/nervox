@@ -38,8 +38,8 @@ jobs:
         uses: reviewdog/action-suggester@v1.18
         with:
           tool_name: BLACK
-          github_token:  ${{ secrets.REVIEWDOG_PR_REVIEW }}
-          filter_mode: nofilter
+          github_token:  ${{ secrets.GITHUB_TOKEN }}
+          filter_mode: "diff_context"
           fail_on_error: 'true'
 
 
