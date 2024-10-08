@@ -47,6 +47,7 @@ jobs:
 
       - name: Formating Suggestions [Black]
         run: |
+          set -ex
           echo "Running Black"
           TMPFILE=$(mktemp)
           git diff > "$TMPFILE"
