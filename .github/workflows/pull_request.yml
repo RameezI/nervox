@@ -54,7 +54,7 @@ jobs:
           fi
 
       - name: Create Pull Request
-        if: steps.format_changes_detected.outputs.python_changes == 'true'
+        if: steps.format_changes_detected.outputs.python_changes == 'false'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
