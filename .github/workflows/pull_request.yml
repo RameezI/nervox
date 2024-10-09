@@ -47,7 +47,7 @@ jobs:
 
       - name: Check for Python File Format Changes
         id: format_changes_detected
-        run: ./.github/workflows/evaluate_diff.sh
+        run: bash ./.github/workflows/evaluate_diff.sh
         shell: bash
 
       - name: Create Pull Request [Black]
