@@ -49,7 +49,8 @@ jobs:
         id: format_changes_detected
         run: |
           set -euxo pipefail
-          ./evaluate_diff.sh
+          $GITHUB_ACTION_PATH/entrypoint.sh
+        shell: bash
 
       - name: Create Pull Request [Black]
         if: steps.format_changes_detected.outputs.python_changes == 'true' &&
