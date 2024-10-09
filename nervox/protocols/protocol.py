@@ -135,7 +135,7 @@ class Protocol(tf.Module):
     @property
     def modules(self):
         return self._modules
-    
+
     def reset_metrics(self):
         if self._metrics:
             [metric.reset() for metric in self._metrics]
@@ -260,7 +260,9 @@ class Protocol(tf.Module):
             key: module for key, module in modules.items() if key in required_args
         }
 
-        self._set_modules(modules)  # Link modules from the outer scope with the protocol.
+        self._set_modules(
+            modules
+        )  # Link modules from the outer scope with the protocol.
         self._set_objectives(
             self.objective_configurator(**required_modules)
         )  # set objective/objectives.
@@ -396,6 +398,6 @@ class Protocol(tf.Module):
             )
             callbacks.on_test_batch_end(step, logs)
         return logs
-    
+
     def __str__(self):
         return self.name

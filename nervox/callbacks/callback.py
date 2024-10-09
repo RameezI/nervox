@@ -144,6 +144,7 @@ class Callback:
         """
         ...
 
+
 class CallbackGroup:
     """Container abstracting a sequence of callbacks."""
 

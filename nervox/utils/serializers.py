@@ -23,6 +23,7 @@ from typing import Any
 import tensorflow as tf
 from types import FunctionType
 
+
 def serializer_dtype(obj: tf.DType):
     if not isinstance(obj, tf.DType):
         raise TypeError(
@@ -31,11 +32,12 @@ def serializer_dtype(obj: tf.DType):
             "\nReceived: {type(obj).__name__}"
         )
     return {
-        "__class__": 'DType',
-        "__module__": 'tensorflow',
-        "__init__": {'_args': [obj.as_datatype_enum]},
+        "__class__": "DType",
+        "__module__": "tensorflow",
+        "__init__": {"_args": [obj.as_datatype_enum]},
         "__repr__": repr(obj),
     }
+
 
 def serializer_tensorshape(obj: tf.TensorShape):
     if not isinstance(obj, tf.TensorShape):
@@ -45,9 +47,9 @@ def serializer_tensorshape(obj: tf.TensorShape):
             "\nReceived: {type(obj).__name__}"
         )
     return {
-        "__class__": 'TensorShape',
-        "__module__": 'tensorflow',
-        "__init__": {'_args': [tuple(obj.as_list())]},
+        "__class__": "TensorShape",
+        "__module__": "tensorflow",
+        "__init__": {"_args": [tuple(obj.as_list())]},
     }
 
 
@@ -58,16 +60,17 @@ def serializer_functiontype(obj: FunctionType):
             "\nExpected a callable `FunctionType`, no methods allowed."
             "\nReceived: `{type(obj).__name__}`"
         )
-    
+
     class Stub:
         def __init__(self) -> None:
             pass
-    
+
     return {
         "__class__": type(obj).__name__,
         "__module__": obj.__module__,
-        obj.__name__: {'_args': [obj.__name__]},
+        obj.__name__: {"_args": [obj.__name__]},
     }
+
 
 class SerializerRegistry:
     """A registry for serializers of types.
@@ -77,7 +80,7 @@ class SerializerRegistry:
     The registered serializers are invoked by the framework to serialize the
     objects to JSON format, therefore make sure that the serialization routine
     provided by your custom serializer is jsonable.
-    
+
     Users must also ensure that the serialization is able to reconstruct the
     object correctly later through either a default deserialization mechanism
     or by providing a custom deserialization routine. A custom deserializer is
@@ -118,16 +121,20 @@ class SerializerRegistry:
             raise ValueError("The serializer must be a function")
 
         if len(inspect.signature(serializer).parameters) != 1:
-            raise ValueError("The serializer function must accept a single argument" 
-                            ", i.e. the object to be serialized")
-        
-        obj_type =  serializer.__annotations__['obj_type']
-        
+            raise ValueError(
+                "The serializer function must accept a single argument"
+                ", i.e. the object to be serialized"
+            )
+
+        obj_type = serializer.__annotations__["obj_type"]
+
         if obj_type is None:
-            raise ValueError("The serializer function must have an"
-                            " annotation for the obj_type argument")
+            raise ValueError(
+                "The serializer function must have an"
+                " annotation for the obj_type argument"
+            )
         cls._serializers[serializer.__annotations__["obj"]] = serializer
-        
+
     @classmethod
     def get(cls, obj_type, default=None):
         """Retrieves a serializer for a given object type.
@@ -137,7 +144,7 @@ class SerializerRegistry:
             The serializer function for the given object type, or None if not found.
         """
         return cls._serializers.get(obj_type, default)
-    
+
     @classmethod
     def list(cls):
         """List all the registered serializers.

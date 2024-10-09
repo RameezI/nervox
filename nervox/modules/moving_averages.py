@@ -25,71 +25,70 @@ import tensorflow as tf
 
 
 class ExponentialMovingAverage(metrics.Metric):
-  """Maintains an exponential moving average for a value.
+    """Maintains an exponential moving average for a value.
 
-  Note this module uses debiasing by default. If you don't want this please use
-  an alternative implementation.
+    Note this module uses debiasing by default. If you don't want this please use
+    an alternative implementation.
 
-  This module keeps track of a hidden exponential moving average that is
-  initialized as a vector of zeros which is then normalized to give the average.
-  This gives us a moving average which isn't biased towards either zero or the
-  initial value. Reference (https://arxiv.org/pdf/1412.6980.pdf)
+    This module keeps track of a hidden exponential moving average that is
+    initialized as a vector of zeros which is then normalized to give the average.
+    This gives us a moving average which isn't biased towards either zero or the
+    initial value. Reference (https://arxiv.org/pdf/1412.6980.pdf)
 
-  Initially:
+    Initially:
 
-      hidden_0 = 0
+        hidden_0 = 0
 
-  Then iteratively:
+    Then iteratively:
 
-      hidden_i = (hidden_{i-1} - value) * (1 - decay)
-      average_i = hidden_i / (1 - decay^i)
+        hidden_i = (hidden_{i-1} - value) * (1 - decay)
+        average_i = hidden_i / (1 - decay^i)
 
-  Attributes:
-    average: Variable holding average. Note that this is None until the first
-      value is passed.
-  """
-
-  def __init__(self, decay: types.FloatLike, name: Optional[str] = None):
-    """Creates a debiased moving average module.
-
-    Args:
-      decay: The decay to use. Note values close to 1 result in a slow decay
-        whereas values close to 0 result in faster decay, tracking the input
-        values more closely.
-      name: Name of the module.
+    Attributes:
+      average: Variable holding average. Note that this is None until the first
+        value is passed.
     """
-    super().__init__(name=name)
-    self._decay = decay
-    self._counter = tf.Variable(
-        0, trainable=False, dtype=tf.int64, name="counter")
 
-    self._hidden = None
-    self.average = None
+    def __init__(self, decay: types.FloatLike, name: Optional[str] = None):
+        """Creates a debiased moving average module.
 
-  def update(self, value: tf.Tensor):
-    """Applies EMA to the value given."""
-    self.initialize(value)
+        Args:
+          decay: The decay to use. Note values close to 1 result in a slow decay
+            whereas values close to 0 result in faster decay, tracking the input
+            values more closely.
+          name: Name of the module.
+        """
+        super().__init__(name=name)
+        self._decay = decay
+        self._counter = tf.Variable(0, trainable=False, dtype=tf.int64, name="counter")
 
-    self._counter.assign_add(1)
-    value = tf.convert_to_tensor(value)
-    counter = tf.cast(self._counter, value.dtype)
-    self._hidden.assign_sub((self._hidden - value) * (1 - self._decay))
-    self.average.assign((self._hidden / (1. - tf.pow(self._decay, counter))))
+        self._hidden = None
+        self.average = None
 
-  @property
-  def value(self) -> tf.Tensor:
-    """Returns the current EMA."""
-    return self.average.read_value()
+    def update(self, value: tf.Tensor):
+        """Applies EMA to the value given."""
+        self.initialize(value)
 
-  def reset(self):
-    """Resets the EMA."""
-    self._counter.assign(tf.zeros_like(self._counter))
-    self._hidden.assign(tf.zeros_like(self._hidden))
-    self.average.assign(tf.zeros_like(self.average))
+        self._counter.assign_add(1)
+        value = tf.convert_to_tensor(value)
+        counter = tf.cast(self._counter, value.dtype)
+        self._hidden.assign_sub((self._hidden - value) * (1 - self._decay))
+        self.average.assign((self._hidden / (1.0 - tf.pow(self._decay, counter))))
 
-  @once.once
-  def initialize(self, value: tf.Tensor):
-    self._hidden = tf.Variable(
-        tf.zeros_like(value), trainable=False, name="hidden")
-    self.average = tf.Variable(
-        tf.zeros_like(value), trainable=False, name="average")
+    @property
+    def value(self) -> tf.Tensor:
+        """Returns the current EMA."""
+        return self.average.read_value()
+
+    def reset(self):
+        """Resets the EMA."""
+        self._counter.assign(tf.zeros_like(self._counter))
+        self._hidden.assign(tf.zeros_like(self._hidden))
+        self.average.assign(tf.zeros_like(self.average))
+
+    @once.once
+    def initialize(self, value: tf.Tensor):
+        self._hidden = tf.Variable(tf.zeros_like(value), trainable=False, name="hidden")
+        self.average = tf.Variable(
+            tf.zeros_like(value), trainable=False, name="average"
+        )

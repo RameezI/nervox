@@ -22,7 +22,7 @@ from pathlib import Path
 import logging
 
 
-print(f'tf=__version__: {tf.__version__}')
+print(f"tf=__version__: {tf.__version__}")
 logging.basicConfig(level=logging.INFO, format=" %(message)s")
 logger = logging.getLogger("tf_recursive")
 logger.setLevel(logging.INFO)
@@ -34,6 +34,7 @@ two variables. The variables are created outside the module and are
 passed to the module as arguments. The module is exported and loaded
 back to demonstrate that the variables are saved and loaded correctly.
 """
+
 
 def create_variables() -> Tuple[tf.Variable, tf.Variable]:
     """This function creates the variables x and y and initializes them with random values.
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     with tf.device("/cpu:0"):
         a, b = create_variables()
         module = MyModule(a, b)
-       
+
     graph = module.compute.get_concrete_function().graph
 
     # print the resource handles
@@ -97,17 +98,18 @@ if __name__ == "__main__":
         # list all variables in the SavedModel
         with tf.device("/cpu:0"):
             restored_module = tf.saved_model.load(export_dir)
-            logger.info(f'\nRestored model of type: {type(restored_module)}')
+            logger.info(f"\nRestored model of type: {type(restored_module)}")
 
         logger.info("\nVariables in the original module:")
-        #logger.info(f'variables: {module.variables}')
+        # logger.info(f'variables: {module.variables}')
         logger.info(f"(a,  b): ({module.a.numpy()}, {module.b.numpy()})\n")
-        
 
         logger.info("\nVariables in the restored module:")
-        #logger.info(f'variables: {restored_module.variables}')
-        logger.info(f"(a,  b): ({restored_module.a.numpy()}, {restored_module.b.numpy()})\n")
-        
+        # logger.info(f'variables: {restored_module.variables}')
+        logger.info(
+            f"(a,  b): ({restored_module.a.numpy()}, {restored_module.b.numpy()})\n"
+        )
+
         restored_graph = restored_module.compute.get_concrete_function().graph
         logger.info("\nVariable name to placeholder mapping in the restored function:")
         for var, placeholder in restored_graph.captures:

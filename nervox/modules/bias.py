@@ -13,10 +13,10 @@
 #
 # Author(s): Rameez Ismail
 # Email(s):  rameez.ismaeel@gmail.com
-# 
-# This code is adapted from Sonnet by DeepMind: 
+#
+# This code is adapted from Sonnet by DeepMind:
 # https://github.com/deepmind/sonnet
-# The project is licensed under the Apache-2.0. 
+# The project is licensed under the Apache-2.0.
 # You may obtain a copy of the license at:
 # http://www.apache.org/licenses/LICENSE-2.0
 

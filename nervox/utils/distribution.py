@@ -30,25 +30,26 @@ def scaled_loss(loss_value):
     """
     num_replicas = tf.distribute.get_strategy().num_replicas_in_sync
     if num_replicas > 1:
-        loss_value *= (1. / num_replicas)
+        loss_value *= 1.0 / num_replicas
     return loss_value
 
 
 class DistributedLossWrapper:
     """A container that wraps the loss object to correctly
-     perform reduction while training on multiple replicas in sync"""
-    
+    perform reduction while training on multiple replicas in sync"""
+
     def __init__(self, loss: tf.keras.losses.Loss):
         super(DistributedLossWrapper, self).__init__()
         loss._allow_sum_over_batch_size = True
         self._loss = loss
-    
+
     def __call__(self, *args, **kwargs):
         if self._loss.reduction in [Reduction.SUM_OVER_BATCH_SIZE]:
             loss = scaled_loss(self._loss(*args, **kwargs))
         else:
             loss = self._loss(*args, **kwargs)
         return loss
+
 
 # class AverageLoss(Metric):
 #     """
