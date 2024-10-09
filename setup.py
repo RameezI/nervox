@@ -43,6 +43,5 @@ setup(name='nervox',
       author_email='Rameez.ismaeel@gmail.com',
       packages=[],
       install_requires=['numpy', 'pandas', 'matplotlib', 'scikit-learn',
-                        'tensorflow==2.11.*', 'tensorflow-datasets',
-                        'tensorflow-addons'],
+                        'tensorflow[and-cuda]', 'tensorflow-datasets'],
       zip_safe=False)

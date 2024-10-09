@@ -29,7 +29,7 @@ from nervox import Trainer
 from nervox.data import DataStream
 from nervox.protocols import Classification
 from tensorflow.python.distribute import combinations
-from nervox.modules.vision_decoders import GlobalAvgPoolDecoder
+from nervox.modules.vision.decoders import GlobalAvgPoolDecoder
 
 MODELS = ['convnet']
 

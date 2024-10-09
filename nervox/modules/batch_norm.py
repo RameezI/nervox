@@ -184,7 +184,7 @@ class BatchNorm(Module):
     def build(self, input_shape):
         rank = len(input_shape)
         keepdims = False if self._channel_index == -1 else True
-        axes = set(range(rank)) - set([self._channel_index])
+        axes = tuple(set(range(rank)) - set([self._channel_index]))
 
         with tf.name_scope(self.name):
             self._moving_mean = Mean(
