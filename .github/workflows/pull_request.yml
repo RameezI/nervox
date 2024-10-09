@@ -43,7 +43,7 @@ jobs:
         id: action_black
         with:
           options: ""
-          src: "."
+          src: "./pursuits"
 
       - name: Check for Pyton File Changes
         id: diff_python
