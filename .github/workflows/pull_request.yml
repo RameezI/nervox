@@ -51,7 +51,7 @@ jobs:
 
       - name: Create Pull Request [Black]
         if: steps.format_changes_detected.outputs.files != '' &&
-            steps.format_changes_detected.outputs.hunks|int >= 20
+            steps.format_changes_detected.outputs.hunks >= 20
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.ACTION_PULL_REQUEST }}
@@ -65,7 +65,7 @@ jobs:
 
       - name: Create Suggestions within PR [Black]
         if: steps.format_changes_detected.outputs.python_changes != '' &&
-            steps.format_changes_detected.outputs.hunks|int < 20
+            steps.format_changes_detected.outputs.hunks < 20
         run: |
           echo "creating suggestions within PR.."
 
