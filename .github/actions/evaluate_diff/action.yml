@@ -6,21 +6,7 @@ runs:
   steps:
     - name: "Evaluate Diff"
       id: evaluate_diff
-      run: |
-        set -euxo pipefail
-
-        # Capture Python files from the diff
-        files=$(git diff --name-only | grep -E '.*\.py$' || true) # Handle empty results
-        hunks=$(git diff --unified=0 | grep -c '^@@')
-
-        # Debug output
-        echo "files=$files"
-        echo "hunks=$hunks"
-
-        # Write outputs to $GITHUB_OUTPUT
-        echo "files=$files" >> $GITHUB_OUTPUT
-        echo "hunks=$hunks" >> $GITHUB_OUTPUT
-      shell: bash
+      run: evaluate_diff.sh
 
 outputs:
   files:
