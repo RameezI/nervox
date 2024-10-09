@@ -36,14 +36,25 @@ def run_tests():
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-v", "--verbose", action="count", default=0,
-                        help="verbosity level, use: [-v | -vv | -vvv]")
-    parser.add_argument("-s", "--start-directory", default=None,
-                        help="directory to start discovery")
-    parser.add_argument("-p", "--pattern", default="test*.py",
-                        help="pattern to match test files ('test*.py' default)")
-    parser.add_argument("test", nargs="*",
-                        help="test specs (e.g. module.TestCase.test_func)")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="verbosity level, use: [-v | -vv | -vvv]",
+    )
+    parser.add_argument(
+        "-s", "--start-directory", default=None, help="directory to start discovery"
+    )
+    parser.add_argument(
+        "-p",
+        "--pattern",
+        default="test*.py",
+        help="pattern to match test files ('test*.py' default)",
+    )
+    parser.add_argument(
+        "test", nargs="*", help="test specs (e.g. module.TestCase.test_func)"
+    )
     args = parser.parse_args()
     raise NotImplemented
 

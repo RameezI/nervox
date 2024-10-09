@@ -29,13 +29,13 @@ def capture_params(*args_outer):
         """
         Decorator that captures parameters of a method.
         """
-  
+
         @wraps(_callable)
         def wrapper(*args, **kwargs):
             obj = args[0]
-            _args = args[1:] 
+            _args = args[1:]
 
-            if  obj is not None:
+            if obj is not None:
                 setattr(obj, "_wrapped_with_capture_params_", True)
 
             parameters = [
@@ -68,7 +68,7 @@ def capture_params(*args_outer):
             }
 
             # Collect args and kwargs passed to the function
-            #-----------------------------------------------
+            # -----------------------------------------------
             # (a) extract the position-only arguments
             args_positional_only = list(_args[: len(position_only_args)])
             args_mapped_positional = dict()
@@ -78,28 +78,33 @@ def capture_params(*args_outer):
                 1 for param in position_keyword_args if param in kwargs
             )
             varargs_start = len(position_only_args)
-            varargs_start += (len(position_keyword_args) - passed_as_keyword)
+            varargs_start += len(position_keyword_args) - passed_as_keyword
             var_positional_params = list(_args[varargs_start:])
 
             if var_positional_params:
-            # (c1) extend _args to include the variable positional arguments
-            # as well as the mappable positional arguments. This implies all
-            # arguments passed to the function are recorded `args_positional`
-            # attribute of the object.
+                # (c1) extend _args to include the variable positional arguments
+                # as well as the mappable positional arguments. This implies all
+                # arguments passed to the function are recorded `args_positional`
+                # attribute of the object.
                 args_positional_only = _args
-                params = {key: value for key, value in params.items()
-                           if key not in position_keyword_args}
+                params = {
+                    key: value
+                    for key, value in params.items()
+                    if key not in position_keyword_args
+                }
             else:
-            # (c2) when variable positional arguments are not spotted we can map
-            # the positional arguments and update the `params` dictionary.
-            # Otherwise, mappable positional arguments are passed as a list
-            # to the function.
-                _zipped_args = zip(position_keyword_args, _args[len(position_only_args):])
-                args_mapped_positional = dict(_zipped_args) 
-            
-            # (d) update the params dictionary with the positional 
+                # (c2) when variable positional arguments are not spotted we can map
+                # the positional arguments and update the `params` dictionary.
+                # Otherwise, mappable positional arguments are passed as a list
+                # to the function.
+                _zipped_args = zip(
+                    position_keyword_args, _args[len(position_only_args) :]
+                )
+                args_mapped_positional = dict(_zipped_args)
+
+            # (d) update the params dictionary with the positional
             #     and keyword arguments passed to the function
-            params.update({'args_positional': args_positional_only})
+            params.update({"args_positional": args_positional_only})
             params.update(args_mapped_positional)
             params.update({key: value for key, value in kwargs.items()})
 
@@ -108,7 +113,7 @@ def capture_params(*args_outer):
                 obj.params = params
             else:
                 obj.params.update(params)
-                
+
             return _callable(*args, **kwargs)
 
         wrapper._wrapper_capture_params_ = True
@@ -158,7 +163,7 @@ class MyTransform(Transform):
 
 
 if __name__ == "__main__":
-    mt = MyTransform(1, 2, 3, 4, 5, 6, 7, 8, 9, 10,  param_a="a", param_b="b")
+    mt = MyTransform(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, param_a="a", param_b="b")
     print(mt.params)
-    mt = MyTransform(1, 2, param1=3, param2=4,  param_a="a", param_b="b")
+    mt = MyTransform(1, 2, param1=3, param2=4, param_a="a", param_b="b")
     print(mt.params)

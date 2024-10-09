@@ -32,7 +32,9 @@ class TestMethodsCapture(tf.test.TestCase):
         my_obj.my_method(arg1="value1", arg2="value2")
 
         my_config = my_obj.params["my_method"]
-        self.assertEqual(my_config, {"arg1": "value1", "arg2": "value2", "arg3": "default"})
+        self.assertEqual(
+            my_config, {"arg1": "value1", "arg2": "value2", "arg3": "default"}
+        )
 
     def test_capture_params_with_kwargs(self):
         class MyClass:
@@ -41,7 +43,7 @@ class TestMethodsCapture(tf.test.TestCase):
                 self.arg1 = arg1
                 self.arg2 = arg2
                 self.arg3 = arg3
-        
+
         my_obj = MyClass()
         my_obj.my_method(arg1="ignore", arg2="value2")
 
@@ -149,9 +151,10 @@ class TestMethodsCapture(tf.test.TestCase):
 
         my_obj = MyClass()
         my_obj.my_method("value1", "value2", arg3="updated_arg3")
-        self.assertEqual(my_obj.params["my_method"],
-                          {"args_positional": ["value1"],
-                            "arg2": "value2", "arg3": "updated_arg3"})
+        self.assertEqual(
+            my_obj.params["my_method"],
+            {"args_positional": ["value1"], "arg2": "value2", "arg3": "updated_arg3"},
+        )
 
     def test_capture_params_var_positional(self):
         class MyClass:
@@ -164,9 +167,15 @@ class TestMethodsCapture(tf.test.TestCase):
 
         my_obj = MyClass()
         my_obj.my_method("value1", "value2", arg1=1, arg2=2, arg3="updated_arg3")
-        self.assertEqual(my_obj.params["my_method"],
-                            {"args_positional": ["value1", "value2"],
-                             "arg1": 1, "arg2": 2, "arg3": "updated_arg3"})
+        self.assertEqual(
+            my_obj.params["my_method"],
+            {
+                "args_positional": ["value1", "value2"],
+                "arg1": 1,
+                "arg2": 2,
+                "arg3": "updated_arg3",
+            },
+        )
 
 
 if __name__ == "__main__":
