@@ -7,22 +7,24 @@ runs:
     - name: "Evaluate Diff"
       id: evaluate_diff
       run: |
-        # Run the shell script
-        ./evaluate_diff.sh
-
+        set -euxo pipefail
         # Capture output values from the shell script (example for bash)
-        python_changes=$(grep -c '.py' <<< "$(git diff --name-only)")
+        files=$(git diff --name-only | grep -E '.*\.py$')
         hunks=$(git diff --unified=0 | grep -c '^@@')
 
-        # Set the output for further steps to use
-        echo "python_changes=$python_changes" >> $GITHUB_OUTPUT
-        echo "hunks=$hunks" >> $GITHUB_OUTPUT
+        # debug output
+        echo "files=$files"
+        echo "hunks=$hunks"
+        
+        echo "files=$files" >> $GITHUB_OUTPUT
+        echo "hunks=$hunks_changed" >> $GITHUB_OUTPUT
+
       shell: bash
 
 outputs:
-  python_changes:
-    description: "Whether Python file format changes were detected"
-    value: ${{ steps.evaluate_diff.outputs.python_changes }}
+  files:
+    description: "List of Python files changed in the diff"
+    value: ${{ steps.evaluate_diff.outputs.files }}
   hunks:
     description: "Number of hunks in the diff"
     value: ${{ steps.evaluate_diff.outputs.hunks }}
