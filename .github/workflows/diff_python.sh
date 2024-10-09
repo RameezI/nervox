@@ -11,13 +11,13 @@ handle_error() {
 }
 
 # Capture Python files from the diff
-files=$(git diff --name-only | grep -E '.*\.py$' || true)
+files_formated=$(git diff --name-only | grep -E '.*\.py$' || true)
 if [ $? -ne 0 ]; then handle_error "Capturing Python files"; fi
 
 # Check if any Python files were captured
-if [ -z "$files" ]; then
+if [ -z "$files_formated" ]; then
     echo "No Python files changed."
-    echo "files=" >> $GITHUB_OUTPUT  # Set empty output if no files found
+    echo "files_formated=" >> $GITHUB_OUTPUT 
     echo "hunks=0" >> $GITHUB_OUTPUT
     exit 0  # Exit gracefully if no files changed
 fi
@@ -25,6 +25,6 @@ fi
 hunks=$(git diff --unified=0 --name-only | grep -E '.*\.py$' | xargs -I {} git diff --unified=0 {} | grep '^@@' | wc -l)
 if [ $? -ne 0 ]; then handle_error "Counting hunks"; fi
 
-echo "files=$files" 
-echo "hunks=$hunks"
+echo "files=$files_formated" >> $GITHUB_OUTPUT
+echo "hunks=$hunks" >> $GITHUB_OUTPUT
 
