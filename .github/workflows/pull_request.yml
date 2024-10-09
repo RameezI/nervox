@@ -45,10 +45,9 @@ jobs:
           options: ""
           src: "."
 
-      - name: Check for Python File Format Changes
+      - name: Check for Pyton File Changes
         id: format_changes_detected
-        run: bash ./.github/workflows/evaluate_diff.sh
-        shell: bash
+        uses: ./.github/actions/evaluate_diff
 
       - name: Create Pull Request [Black]
         if: steps.format_changes_detected.outputs.python_changes == 'true' &&

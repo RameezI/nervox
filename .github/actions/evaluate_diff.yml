@@ -1,0 +1,19 @@
+# .github/actions/evaluate_diff/action.yml
+name: "Evaluate Diff"
+description: "Check for Python file format changes and count hunks"
+
+runs:
+  using: "composite"
+  steps:
+  -name: Evaluate Diff
+    id: evaluate_diff
+    run: evaluate_diff.sh
+    shell: bash
+
+outputs:
+  python_changes:
+    description: "Whether Python file format changes were detected"
+    value: ${{ steps.evaluate_diff.outputs.python_changes }}
+  hunks:
+    description: "Number of hunks in the diff"
+    value: ${{ steps.evaluate_diff.outputs.hunks }}
