@@ -25,6 +25,6 @@ fi
 hunks=$(git diff --unified=0 --name-only | grep -E '.*\.py$' | xargs -I {} git diff --unified=0 {} | grep '^@@' | wc -l)
 if [ $? -ne 0 ]; then handle_error "Counting hunks"; fi
 
-echo "files=$files_formated" >> 'pursuits/train_cifar10.py'
+echo "files='pursuits/train_cifar10.py'" >> $GITHUB_OUTPUT
 echo "hunks=$hunks" >> $GITHUB_OUTPUT
 
