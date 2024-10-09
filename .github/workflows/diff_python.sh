@@ -17,14 +17,15 @@ if [ $? -ne 0 ]; then handle_error "Capturing Python files"; fi
 # Check if any Python files were captured
 if [ -z "$files_formated" ]; then
     echo "No Python files changed."
-    echo "files_formated=" >> $GITHUB_OUTPUT 
-    echo "hunks=0" >> $GITHUB_OUTPUT
+    echo "files_formated=" | tee -a "$GITHUB_OUTPUT"
+    echo "hunks=0" | tee -a "$GITHUB_OUTPUT"
     exit 0  # Exit gracefully if no files changed
 fi
 
 hunks=$(git diff --unified=0 --name-only | grep -E '.*\.py$' | xargs -I {} git diff --unified=0 {} | grep '^@@' | wc -l)
 if [ $? -ne 0 ]; then handle_error "Counting hunks"; fi
 
-echo "files_formated=$files_formated" >> $GITHUB_OUTPUT
-echo "hunks=$hunks" >> $GITHUB_OUTPUT
+# Output results
+echo "files_formated=$files_formated" | tee -a "$GITHUB_OUTPUT"
+echo "hunks=$hunks" | tee -a "$GITHUB_OUTPUT"
 
