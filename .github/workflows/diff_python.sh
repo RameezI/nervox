@@ -25,10 +25,6 @@ fi
 hunks=$(git diff --unified=0 --name-only | grep -E '.*\.py$' | xargs -I {} git diff --unified=0 {} | grep '^@@' | wc -l)
 if [ $? -ne 0 ]; then handle_error "Counting hunks"; fi
 
-# set output variables
- Format the files variable to be a single line, space-separated
-formatted_files=$(echo "$files" | tr '\n' ' ' | sed 's/ $//')
-
-echo "files=$formatted_files" >> $GITHUB_OUTPUT
-echo "hunks=$hunks" >> $GITHUB_OUTPUT
+echo "files=$files" 
+echo "hunks=$hunks"
 
