@@ -6,7 +6,7 @@ runs:
   steps:
     - name: "Evaluate Diff"
       id: evaluate_diff
-      run: evaluate_diff.sh
+      run: ./evaluate_diff.sh
       shell: bash
 
 outputs:
