@@ -9,7 +9,7 @@ runs:
 
     - name: "Evaluate Diff"
       id: diff_python
-      run: ./diff_python.sh
+      run: ./github/actions/diff_python/diff_python.sh
       shell: bash
 
 outputs:
