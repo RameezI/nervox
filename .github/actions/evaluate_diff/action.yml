@@ -8,17 +8,18 @@ runs:
       id: evaluate_diff
       run: |
         set -euxo pipefail
-        # Capture output values from the shell script (example for bash)
-        files=$(git diff --name-only | grep -E '.*\.py$')
+
+        # Capture Python files from the diff
+        files=$(git diff --name-only | grep -E '.*\.py$' || true) # Handle empty results
         hunks=$(git diff --unified=0 | grep -c '^@@')
 
-        # debug output
+        # Debug output
         echo "files=$files"
         echo "hunks=$hunks"
-        
-        echo "files=$files" >> $GITHUB_OUTPUT
-        echo "hunks=$hunks_changed" >> $GITHUB_OUTPUT
 
+        # Write outputs to $GITHUB_OUTPUT
+        echo "files=$files" >> $GITHUB_OUTPUT
+        echo "hunks=$hunks" >> $GITHUB_OUTPUT
       shell: bash
 
 outputs:
