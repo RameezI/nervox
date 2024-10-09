@@ -5,17 +5,17 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    types: [ opened, synchronize, reopened, edited ]
   workflow_dispatch:
 
-permissions:
+
+permissions: 
   contents: read
-  checks: write
-  issues: write
   pull-requests: write
 
 
 jobs:
-  linting:
+  Linter:
     runs-on: ubuntu-latest
 
     steps:
@@ -42,71 +42,45 @@ jobs:
         uses:  psf/black@stable
         id: action_black
         with:
-          options: "."
+          options: ""
+          src: "."
 
-      - name: Formating Suggestions [Black]
+      - name: Check for Pyton File Changes
+        id: diff_python
+        uses: ./.github/actions/diff_python
+
+      - name: Create Pull Request [Black]
+        if: steps.diff_python.outputs.files != '' &&
+            steps.diff_python.outputs.hunks >= 20
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.ACTION_PULL_REQUEST }}
+          title: "Format Python code with psf/black push"
+          commit-message: ":art: Format Python code with psf/black"
+          body: |
+            There appear to be some python formatting errors in ${{ github.sha }}. This pull request
+            uses the [psf/black](https://github.com/psf/black) formatter to fix these issues.
+          base: ${{ github.head_ref }} # Creates pull request onto pull request or commit branch
+          branch: actions/black
+
+      - name: Create Suggestions within PR [Black]
+        if: steps.diff_python.outputs.python_changes != '' &&
+            steps.diff_python.outputs.hunks < 20
         run: |
-          set -euxo pipefail
-          echo "Running Black"
-          TMPFILE=$(mktemp)
-          git diff > "$TMPFILE"
-          reviewdog -f=diff\
-                    -name=BLACK\
-                    -reporter=github-pr-review\
-                    -level=warning\
-                    < "$TMPFILE"
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.REVIEWDOG_PR_REVIEW }}
+          echo "creating suggestions within PR.."
 
-
-
-
-      # - name: Run Bandit
-      #   uses: microsoft/action-python@0.7.3
-      #   with:
-      #     workdir: .
-      #     python_version: '3.12'
-      #     bandit: true
-
-      
-      # - name: Run RUF
-      #   uses: chartboost/ruff-action@v1
-      #   with:
-      #     args: ---fix -e
-        
           
-      # - name: Run Pyright
-      #   uses: microsoft/action-python@0.7.3
-      #   with:
-      #     workdir: .
-      #     python_version: '3.12'
-      #     pyright: true
+  security-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Bandit Scan
+        uses: shundor/python-bandit-scan@9cc5aa4a006482b8a7f91134412df6772dbda22c
+        with: 
+          exit_zero: true 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
-  # testing:
-  #   runs-on: [self-hosted, linux, x64, philips-code-hub, ubuntu-latest]
-  #   strategy:
-  #     matrix:
-  #       python-version: ['3.9', '3.10', '3.11', '3.12']
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: ${{ matrix.python-version }}
-  #         cache: 'pip'
-  #         cache-dependency-path: 'pyproject.toml'
-
-  #     - name: Install Dependencies
-  #       run: |
-  #         python --version
-  #         python -m pip install -e .[test]
-
-  #     - name: Pytest
-  #       uses: microsoft/action-python@0.7.3
-  #       with:
-  #         workdir: .
-  #         python_version: ${{ matrix.python-version }}
-  #         pytest: true
