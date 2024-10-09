@@ -1,0 +1,50 @@
+
+[build-system]
+requires = ["setuptools>=61.0.0", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "nervox"
+description = "A framework to support development, training, evaluation & deployment of deep neural networks using tensorflow"
+readme = "README.md"
+authors = [
+    {name = "Rameez Ismail", email = "rameez.ismail@protonmail.com"},
+]
+
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "pandas",
+    'matplotlib',
+    'scikit-learn',
+    'tensorflow[and-cuda]', 
+    'tensorflow-datasets',
+]
+dynamic = ["version"]
+
+
+[project.optional-dependencies]
+dev = ["black", "bandit", "pyright", "ruff"]
+test = ["tensorflow[and-cuda]"]
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nervox"]
+
+[tool.setuptools_scm]
+version_file = "_version.py"
+
+
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    \.git
+  | build
+  | dist
+  | __pycache__
+  | docs
+)/
+'''

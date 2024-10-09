@@ -1,0 +1,112 @@
+name: Pull Request
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  issues: write
+  pull-requests: write
+
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff
+
+      - name: Setup ReviewDog
+        uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
+      - name: Setup Black
+        uses:  psf/black@stable
+        id: action_black
+        with:
+          options: "."
+
+      - name: Formating Suggestions [Black]
+        run: |
+          set -euxo pipefail
+          echo "Running Black"
+          TMPFILE=$(mktemp)
+          git diff > "$TMPFILE"
+          reviewdog -f=diff\
+                    -name=BLACK\
+                    -reporter=github-pr-review\
+                    -level=warning\
+                    < "$TMPFILE"
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.REVIEWDOG_PR_REVIEW }}
+
+
+
+
+      # - name: Run Bandit
+      #   uses: microsoft/action-python@0.7.3
+      #   with:
+      #     workdir: .
+      #     python_version: '3.12'
+      #     bandit: true
+
+      
+      # - name: Run RUF
+      #   uses: chartboost/ruff-action@v1
+      #   with:
+      #     args: ---fix -e
+        
+          
+      # - name: Run Pyright
+      #   uses: microsoft/action-python@0.7.3
+      #   with:
+      #     workdir: .
+      #     python_version: '3.12'
+      #     pyright: true
+
+
+  # testing:
+  #   runs-on: [self-hosted, linux, x64, philips-code-hub, ubuntu-latest]
+  #   strategy:
+  #     matrix:
+  #       python-version: ['3.9', '3.10', '3.11', '3.12']
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
+  #         cache: 'pip'
+  #         cache-dependency-path: 'pyproject.toml'
+
+  #     - name: Install Dependencies
+  #       run: |
+  #         python --version
+  #         python -m pip install -e .[test]
+
+  #     - name: Pytest
+  #       uses: microsoft/action-python@0.7.3
+  #       with:
+  #         workdir: .
+  #         python_version: ${{ matrix.python-version }}
+  #         pytest: true
