@@ -27,9 +27,9 @@ if [ $? -ne 0 ]; then handle_error "Counting hunks"; fi
 
 # get a string of the files nicely formatted so that we can use it in the next steps
 # in the workflow using the ${{ steps.<step_id>.outputs.<output_id> }} syntax
-# files_formatted=$(echo $files_formated | tr '\n' ' ')
+# files_formated=$(echo $files_formated | tr '\n' ' ')
 
 
-echo "files_formatted="$files_formatted"">> $GITHUB_OUTPUT
+echo "files_formatted="$files_formated"">> $GITHUB_OUTPUT
 echo "hunks=$hunks" >> $GITHUB_OUTPUT
 
