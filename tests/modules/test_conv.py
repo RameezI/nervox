@@ -27,7 +27,7 @@ class ConvTest(tf.TestCase, parameterized.TestCase):
             stride=1,
             padding=padding_func,
             data_format="NHWC",
-            **create_constant_initializers(1.0, 1.0, True)
+            **create_constant_initializers(1.0, 1.0, True),
         )
 
         conv1(tf.ones([1, 5, 5, 1], dtype=tf.float32))
@@ -110,7 +110,7 @@ class ConvTest(tf.TestCase, parameterized.TestCase):
             padding=padding,
             with_bias=with_bias,
             data_format="NHWC",
-            **create_constant_initializers(1.0, 1.0, with_bias)
+            **create_constant_initializers(1.0, 1.0, with_bias),
         )
 
         conv2 = conv.ConvND(
@@ -121,7 +121,7 @@ class ConvTest(tf.TestCase, parameterized.TestCase):
             padding=padding,
             with_bias=with_bias,
             data_format="NHWC",
-            **create_constant_initializers(1.0, 1.0, with_bias)
+            **create_constant_initializers(1.0, 1.0, with_bias),
         )
 
         compiled_conv = tf.function(conv2)
@@ -149,10 +149,9 @@ class ConvTest(tf.TestCase, parameterized.TestCase):
         self.assertEqual(out2.shape, [5, 5, 5, 2])
 
     def testUnknownBatchSizeNCHW(self):
-        #TODO: check logic
+        # TODO: check logic
         _device_types = frozenset(
-            device.device_type
-            for device in tf.config.list_logical_devices()
+            device.device_type for device in tf.config.list_logical_devices()
         )
 
         if not "GPU" in _device_types:
@@ -216,14 +215,14 @@ class Conv2DTest(tf.TestCase, parameterized.TestCase):
             [6, 9, 9, 9, 6],
             [6, 9, 9, 9, 6],
             [4, 6, 6, 6, 4],
-        ]
+        ]  # fmt: skip
         conv1 = conv.Conv2D(
             output_channels=1,
             kernel_shape=3,
             stride=1,
             padding="SAME",
             with_bias=with_bias,
-            **create_constant_initializers(1.0, 1.0, with_bias)
+            **create_constant_initializers(1.0, 1.0, with_bias),
         )
 
         out = conv1(tf.ones([1, 5, 5, 1], dtype=tf.float32))
@@ -245,7 +244,7 @@ class Conv2DTest(tf.TestCase, parameterized.TestCase):
             stride=1,
             padding="VALID",
             with_bias=with_bias,
-            **create_constant_initializers(1.0, 1.0, with_bias)
+            **create_constant_initializers(1.0, 1.0, with_bias),
         )
 
         out = conv1(tf.ones([1, 5, 5, 1], dtype=tf.float32))
@@ -269,7 +268,7 @@ class Conv1DTest(tf.TestCase, parameterized.TestCase):
             stride=1,
             padding="SAME",
             with_bias=with_bias,
-            **create_constant_initializers(1.0, 1.0, with_bias)
+            **create_constant_initializers(1.0, 1.0, with_bias),
         )
 
         out = conv1(tf.ones([1, 5, 1], dtype=tf.float32))
@@ -295,7 +294,7 @@ class Conv1DTest(tf.TestCase, parameterized.TestCase):
             stride=1,
             padding="VALID",
             with_bias=with_bias,
-            **create_constant_initializers(1.0, 1.0, with_bias)
+            **create_constant_initializers(1.0, 1.0, with_bias),
         )
 
         out = conv1(tf.ones([1, 5, 1], dtype=tf.float32))
@@ -307,10 +306,9 @@ class Conv1DTest(tf.TestCase, parameterized.TestCase):
 
 class Conv3DTest(tf.TestCase, parameterized.TestCase):
 
-  @parameterized.parameters(True, False)
-  def testComputationPaddingSame(self, with_bias):
-    #fmt: off
-    expected_out = np.asarray([
+    @parameterized.parameters(True, False)
+    def testComputationPaddingSame(self, with_bias):
+        expected_out = np.asarray([
         9, 13, 13, 13, 9, 13, 19, 19, 19, 13, 13, 19, 19, 19, 13, 13, 19, 19,
         19, 13, 9, 13, 13, 13, 9, 13, 19, 19, 19, 13, 19, 28, 28, 28, 19, 19,
         28, 28, 28, 19, 19, 28, 28, 28, 19, 13, 19, 19, 19, 13, 13, 19, 19, 19,
@@ -318,52 +316,52 @@ class Conv3DTest(tf.TestCase, parameterized.TestCase):
         19, 19, 13, 13, 19, 19, 19, 13, 19, 28, 28, 28, 19, 19, 28, 28, 28, 19,
         19, 28, 28, 28, 19, 13, 19, 19, 19, 13, 9, 13, 13, 13, 9, 13, 19, 19,
         19, 13, 13, 19, 19, 19, 13, 13, 19, 19, 19, 13, 9, 13, 13, 13, 9
-    ]).reshape((5, 5, 5))
-    #fmt: on
+    ]).reshape((5, 5, 5))  # fmt: skip
 
-    if not with_bias:
-      expected_out -= 1
+        if not with_bias:
+            expected_out -= 1
 
-    conv1 = conv.Conv3D(
-        output_channels=1,
-        kernel_shape=3,
-        stride=1,
-        padding="SAME",
-        with_bias=with_bias,
-        **create_constant_initializers(1.0, 1.0, with_bias))
+        conv1 = conv.Conv3D(
+            output_channels=1,
+            kernel_shape=3,
+            stride=1,
+            padding="SAME",
+            with_bias=with_bias,
+            **create_constant_initializers(1.0, 1.0, with_bias),
+        )
 
-    out = conv1(tf.ones([1, 5, 5, 5, 1], dtype=tf.float32))
-    self.assertEqual(out.shape, [1, 5, 5, 5, 1])
-    out = tf.squeeze(out, axis=(0, 4))
+        out = conv1(tf.ones([1, 5, 5, 5, 1], dtype=tf.float32))
+        self.assertEqual(out.shape, [1, 5, 5, 5, 1])
+        out = tf.squeeze(out, axis=(0, 4))
 
-    self.assertAllClose(self.evaluate(out), expected_out)
+        self.assertAllClose(self.evaluate(out), expected_out)
 
-  @parameterized.parameters(True, False)
-  def testComputationPaddingValid(self, with_bias):
-    #fmt: off
-    expected_out = np.asarray([
+    @parameterized.parameters(True, False)
+    def testComputationPaddingValid(self, with_bias):
+        expected_out = np.asarray([
         28, 28, 28, 28, 28, 28, 28,
         28, 28, 28, 28, 28, 28, 28,
         28, 28, 28, 28, 28, 28, 28,
         28, 28, 28, 28, 28, 28
-    ]).reshape((3, 3, 3))
-    #fmt: on
-    if not with_bias:
-      expected_out -= 1
+    ]).reshape((3, 3, 3))  # fmt: skip
+        if not with_bias:
+            expected_out -= 1
 
-    conv1 = conv.Conv3D(
-        output_channels=1,
-        kernel_shape=3,
-        stride=1,
-        padding="VALID",
-        with_bias=with_bias,
-        **create_constant_initializers(1.0, 1.0, with_bias))
+        conv1 = conv.Conv3D(
+            output_channels=1,
+            kernel_shape=3,
+            stride=1,
+            padding="VALID",
+            with_bias=with_bias,
+            **create_constant_initializers(1.0, 1.0, with_bias),
+        )
 
-    out = conv1(tf.ones([1, 5, 5, 5, 1], dtype=tf.float32))
-    self.assertEqual(out.shape, [1, 3, 3, 3, 1])
-    out = tf.squeeze(out, axis=(0, 4))
+        out = conv1(tf.ones([1, 5, 5, 5, 1], dtype=tf.float32))
+        self.assertEqual(out.shape, [1, 3, 3, 3, 1])
+        out = tf.squeeze(out, axis=(0, 4))
 
-    self.assertAllClose(self.evaluate(out), expected_out)
+        self.assertAllClose(self.evaluate(out), expected_out)
+
 
 if __name__ == "__main__":
     tf.test.main()
