@@ -561,9 +561,7 @@ class VarianceScalingInitializerTest(InitializersTest):
         ("Tuple", ("a", "b")), ("List", ["a", "b"]), ("Set", {"a", "b"})
     )
     def testCheckInitializersValid(self, keys):
-        initializers.check_initializers(
-            {"a": lambda *_: 0, "b": lambda *_: 1}, keys
-        )
+        initializers.check_initializers({"a": lambda *_: 0, "b": lambda *_: 1}, keys)
 
     def testCheckInitializersInvalid(self):
         with self.assertRaisesRegex(

@@ -36,6 +36,7 @@ import logging
 
 from nervox.callbacks import Callback
 from nervox.utils import VerbosityLevel
+
 logger = logging.getLogger(__name__)
 
 
@@ -87,9 +88,11 @@ class CheckPointer(Callback):
         self._current_epoch = tf.Variable(0, dtype=tf.int64, trainable=False)
         self._progress_bar = kwargs.get("progress_bar", None)
 
-        os.makedirs(str(self.checkpoint_dir)) if not os.path.exists(
-            self.checkpoint_dir
-        ) else None
+        (
+            os.makedirs(str(self.checkpoint_dir))
+            if not os.path.exists(self.checkpoint_dir)
+            else None
+        )
 
         if mode not in ["auto", "min", "max"]:
             logging.warning(
@@ -113,7 +116,7 @@ class CheckPointer(Callback):
 
         # Lazily create, at the start of the training, a checkpoint manager
         self.ckpt_manager = None
-    
+
     def on_eval_end(self, metrics: Dict[str, TensorLike]):
         if self.keep_best and metrics:
             initial_best = metrics.get(self.monitor)
@@ -125,7 +128,6 @@ class CheckPointer(Callback):
                     f" recent points instead!\n"
                 )
         self.best = metrics.get(self.monitor, self.best)
-
 
     def on_train_begin(self):
         checkpoint = tf.train.Checkpoint(
@@ -155,9 +157,11 @@ class CheckPointer(Callback):
                 if self._progress_bar is not None:
                     self._progress_bar.ckpt_statement = {"is_ckpt": True}
                 else:
-                    print(
-                        f"checkpoint: {self.best}-->{current}!"
-                    ) if not self.silent else None
+                    (
+                        print(f"checkpoint: {self.best}-->{current}!")
+                        if not self.silent
+                        else None
+                    )
                 self.best = current
         else:
             self.ckpt_manager.save()
@@ -167,11 +171,9 @@ class CheckPointer(Callback):
                 print("checkpoint!") if not self.silent else None
 
 
-
-
-
 class ProgressParaphraser(Callback):
     """Callback that prints (formatted) progress and metrics to stdout."""
+
     def __init__(
         self,
         progress_bar: ProgressBar,
@@ -185,9 +187,11 @@ class ProgressParaphraser(Callback):
     def on_train_begin(self):
         # get max epochs and pass it to the progress bar
         self._progress_bar.max_epochs = self.trainer.max_epoch
-        print(f"Initiating Train/Validate Cycle: ", end="") if self.verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+        (
+            print(f"Initiating Train/Validate Cycle: ", end="")
+            if self.verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
 
     def on_epoch_begin(self, epoch):
         # prepare statement
@@ -213,9 +217,11 @@ class ProgressParaphraser(Callback):
             "step_count": step_count,
             "samples_done": samples_done,
         }
-        print(f"\r{self._progress_bar}", end="") if self.verbose in [
-            VerbosityLevel.UPDATE_AT_BATCH
-        ] else None
+        (
+            print(f"\r{self._progress_bar}", end="")
+            if self.verbose in [VerbosityLevel.UPDATE_AT_BATCH]
+            else None
+        )
 
     def on_eval_batch_end(self, step, metrics: Dict[str, TensorLike]):
         # update statement
@@ -228,19 +234,25 @@ class ProgressParaphraser(Callback):
             "step_count": step_count,
             "samples_done": samples_done,
         }
-        print(f"\r{self._progress_bar}", end="") if self.verbose in [
-            VerbosityLevel.UPDATE_AT_BATCH
-        ] else None
+        (
+            print(f"\r{self._progress_bar}", end="")
+            if self.verbose in [VerbosityLevel.UPDATE_AT_BATCH]
+            else None
+        )
 
-    def on_eval_end(self, _):  
-        print(f"\r{self._progress_bar}", end="") if self.verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+    def on_eval_end(self, _):
+        (
+            print(f"\r{self._progress_bar}", end="")
+            if self.verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
 
     def on_epoch_end(self, epoch, _):
         self._progress_bar.epoch = epoch
         self._progress_bar.train_samples = self.trainer.train_samples_count
         self._progress_bar.eval_samples = self.trainer.eval_samples_count
-        print(f"\r{self._progress_bar}", end="") if self.verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+        (
+            print(f"\r{self._progress_bar}", end="")
+            if self.verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
