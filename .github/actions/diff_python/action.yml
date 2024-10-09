@@ -1,0 +1,21 @@
+name: "diff_python"
+description: "Check for Python file changes and count hunks"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Checkout Code"
+      uses: actions/checkout@v2
+
+    - name: "Evaluate Diff"
+      id: diff_python
+      run: ./diff_python.sh
+      shell: bash
+
+outputs:
+  files:
+    description: "List of Python files changed"
+    value: ${{ steps.diff_python.outputs.files }}
+  hunks:
+    description: "Number of hunks in the difference"
+    value: ${{ steps.diff_python.outputs.hunks }}

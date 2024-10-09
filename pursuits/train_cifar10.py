@@ -41,7 +41,7 @@ def train(args: argparse.Namespace):
     train_stream = DataStream(
         "cifar10",
         version=args.dataset_version,
-        split=      "train",
+        split="train",
         batch_size=64,
         pkg=None,
         datasets_dir=args.datasets_dir,
