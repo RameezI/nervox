@@ -49,6 +49,10 @@ jobs:
         id: diff_python
         run: ./.github/workflows/diff_python.sh
 
+      - name: DEBUG
+        run: |
+          echo "Files: ${{ steps.diff_python.outputs.files }}"
+          echo "Hunks: ${{ steps.diff_python.outputs.hunks }}"
 
       - name: Create Pull Request [Black]
         if: steps.diff_python.outputs.files !='' && steps.diff_python.outputs.hunks >= 20
