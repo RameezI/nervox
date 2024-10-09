@@ -9,23 +9,33 @@ runs:
       run: |
         set -euo pipefail
 
+        # Function to output errors and exit
+        handle_error() {
+          echo "Error occurred in step: $1"
+          echo "Exiting due to previous errors."
+          exit 1
+        }
+
         # Capture Python files from the diff
-        files=$(git diff --name-only | grep -E '.*\.py$' || true) # Handle empty results
+        files=$(git diff --name-only | grep -E '.*\.py$' || true)
+        if [ $? -ne 0 ]; then handle_error "Capturing Python files"; fi
+
         hunks=$(git diff --unified=0 --name-only | grep -E '.*\.py$' | xargs -I {} git diff --unified=0 {} | grep '^@@' | wc -l)
+        if [ $? -ne 0 ]; then handle_error "Counting hunks"; fi
 
-        # # Debug output
-        # echo "files=$files"
-        # echo "hunks=$hunks"
+        # Debug output
+        echo "Files changed: $files"
+        echo "Number of hunks: $hunks"
 
-        # # Write outputs to $GITHUB_OUTPUT
-        # echo "files=$files" >> $GITHUB_OUTPUT
-        # echo "hunks=$hunks" >> $GITHUB_OUTPUT
+        # Write outputs to $GITHUB_OUTPUT
+        echo "files=$files" >> $GITHUB_OUTPUT
+        echo "hunks=$hunks" >> $GITHUB_OUTPUT
       shell: bash
 
 outputs:
   files:
     description: "List of Python files changed in the diff"
     value: ${{ steps.evaluate_diff.outputs.files }}
-  # hunks:
-  #   description: "Number of hunks in the diff"
-  #   value: ${{ steps.evaluate_diff.outputs.hunks }}
+  hunks:
+    description: "Number of hunks in the diff"
+    value: ${{ steps.evaluate_diff.outputs.hunks }}
