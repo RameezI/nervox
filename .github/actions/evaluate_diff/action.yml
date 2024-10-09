@@ -11,7 +11,7 @@ runs:
 
         # Capture Python files from the diff
         files=$(git diff --name-only | grep -E '.*\.py$' || true) # Handle empty results
-        hunks=$(git diff --unified=0 | grep -c '^@@')
+        hunks=$(git diff --unified=0 --name-only | grep -E '.*\.py$' | xargs -I {} git diff --unified=0 {} | grep '^@@' | wc -l)
 
         # # Debug output
         # echo "files=$files"
