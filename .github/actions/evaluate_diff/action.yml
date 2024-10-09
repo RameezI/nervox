@@ -1,14 +1,23 @@
-# .github/actions/evaluate_diff/action.yml
 name: "Evaluate Diff"
 description: "Check for Python file format changes and count hunks"
 
 runs:
   using: "composite"
   steps:
-  -name: Evaluate Diff
-    id: evaluate_diff
-    run: evaluate_diff.sh
-    shell: bash
+    - name: "Evaluate Diff"
+      id: evaluate_diff
+      run: |
+        # Run the shell script
+        ./evaluate_diff.sh
+
+        # Capture output values from the shell script (example for bash)
+        python_changes=$(grep -c '.py' <<< "$(git diff --name-only)")
+        hunks=$(git diff --unified=0 | grep -c '^@@')
+
+        # Set the output for further steps to use
+        echo "python_changes=$python_changes" >> $GITHUB_OUTPUT
+        echo "hunks=$hunks" >> $GITHUB_OUTPUT
+      shell: bash
 
 outputs:
   python_changes:
