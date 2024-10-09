@@ -51,11 +51,11 @@ jobs:
 
       - name: DEBUG
         run: |
-          echo "Files: ${{ steps.diff_python.outputs.files }}"
+          echo "Files: ${{ steps.diff_python.outputs.files_formatted }}"
           echo "Hunks: ${{ steps.diff_python.outputs.hunks }}"
 
       - name: Create Pull Request [Black]
-        if: steps.diff_python.outputs.files !='' && steps.diff_python.outputs.hunks >= 20
+        if: steps.diff_python.outputs.files_formatted && steps.diff_python.outputs.hunks >= 20
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.ACTION_PULL_REQUEST }}
@@ -68,7 +68,7 @@ jobs:
           branch: actions/black
 
       - name: Create Suggestions within PR [Black]
-        if: steps.diff_python.outputs.files !=''  && steps.diff_python.outputs.hunks < 20
+        if: steps.diff_python.outputs.files_formatted && steps.diff_python.outputs.hunks < 20
         run: |
           echo "creating suggestions within PR.."
 
