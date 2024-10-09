@@ -6,13 +6,26 @@ runs:
   steps:
     - name: "Evaluate Diff"
       id: evaluate_diff
-      run: ./evaluate_diff.sh
+      run: |
+        set -euo pipefail
+
+        # Capture Python files from the diff
+        files=$(git diff --name-only | grep -E '.*\.py$' || true) # Handle empty results
+        # hunks=$(git diff --unified=0 | grep -c '^@@')
+
+        # # Debug output
+        # echo "files=$files"
+        # echo "hunks=$hunks"
+
+        # # Write outputs to $GITHUB_OUTPUT
+        # echo "files=$files" >> $GITHUB_OUTPUT
+        # echo "hunks=$hunks" >> $GITHUB_OUTPUT
       shell: bash
 
 outputs:
   files:
     description: "List of Python files changed in the diff"
     value: ${{ steps.evaluate_diff.outputs.files }}
-  hunks:
-    description: "Number of hunks in the diff"
-    value: ${{ steps.evaluate_diff.outputs.hunks }}
+  # hunks:
+  #   description: "Number of hunks in the diff"
+  #   value: ${{ steps.evaluate_diff.outputs.hunks }}
