@@ -18,7 +18,7 @@ import tensorflow as tf
 from abc import abstractmethod
 from typing import final, Sequence, Dict
 from nervox import Trainer
-from nervox.protocols import        Protocol
+from nervox.protocols import Protocol
 from nervox.utils.types import TensorLike
 
 
