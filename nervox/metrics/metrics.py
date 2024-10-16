@@ -86,7 +86,7 @@ class Mean(Metric):
         axis=None,
         keep_dims: bool = False,
         name: str = "mean",
-        dtype=tf.float32
+        dtype=tf.float32,
     ):
         super().__init__(name, dtype=dtype)
         self.axis = axis
@@ -101,13 +101,17 @@ class Mean(Metric):
         return value_sum, count
 
     def reset(self) -> None:
-        self._value_sum.assign(
-            tf.zeros(self._value_sum.shape, self.dtype)
-        ) if self._value_sum is not None else None
+        (
+            self._value_sum.assign(tf.zeros(self._value_sum.shape, self.dtype))
+            if self._value_sum is not None
+            else None
+        )
 
-        self._count.assign(
-            tf.zeros(self._count.shape, self.dtype)
-        ) if self._value_sum is not None else None
+        (
+            self._count.assign(tf.zeros(self._count.shape, self.dtype))
+            if self._value_sum is not None
+            else None
+        )
 
     def _variables_shape(self, input_shape):
         if self.keep_dims:

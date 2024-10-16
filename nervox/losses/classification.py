@@ -37,16 +37,24 @@ def reduce_loss(losses, reduction=Reduction.SUM_OVER_BATCH_SIZE):
         loss = losses
     else:
         # loss = tf.reduce_sum(losses)
-        loss = tf.reduce_mean(losses) if reduction == Reduction.SUM_OVER_BATCH_SIZE \
+        loss = (
+            tf.reduce_mean(losses)
+            if reduction == Reduction.SUM_OVER_BATCH_SIZE
             else tf.reduce_sum(losses)
+        )
     return loss
 
 
-def binary_cross_entropy(y_true: TensorLike, y_pred: TensorLike, weights: Union[None, TensorLike] = None,
-                         focus_credit: float = 0., gamma_neg: float = 0., gamma_pos: float = 0.,
-                         label_smoothing: float = 0.,
-                         epsilon=1e-8
-                         ):
+def binary_cross_entropy(
+    y_true: TensorLike,
+    y_pred: TensorLike,
+    weights: Union[None, TensorLike] = None,
+    focus_credit: float = 0.0,
+    gamma_neg: float = 0.0,
+    gamma_pos: float = 0.0,
+    label_smoothing: float = 0.0,
+    epsilon=1e-8,
+):
     """Computes the binary cross entropy loss.
     Standalone usage:
     >>> targets = [[0, 1], [0, 0]]
@@ -54,72 +62,78 @@ def binary_cross_entropy(y_true: TensorLike, y_pred: TensorLike, weights: Union[
     >>> loss = binary_cross_entropy(targets, scores)
     >>> loss.numpy()
     array([0.916 , 0.714], dtype=float32)
-    
+
     Args:
 
      y_true:               Ground truth values. shape = `[batch_size, d0, .. dN]`.
-     
+
      y_pred:               The predicted values. shape = `[batch_size, d0, .. dN]`.
-     
+
      weights:              The relative weight for each logit/prediction; the shape must allow
                             broadcasting to the y_true and y_pred
-     
+
      focus_credit:         Provides asymmetric clipping. Adds some constant slack to the p- .This is done to ensure an
                            increased focus, by a constant value, for positive class detection.
-    
+
      gamma_neg:            Controls the weighting of the penalty for (true/false) positive detection.
      gamma_pos:           Controls the weighing of the penalty for (true/false) negative detection.
-     
+
      label_smoothing:      Float in [0, 1]. If > `0` then smooth the labels by
                            squeezing them towards 0.5 That is, using `1. - 0.5 * label_smoothing`
                            for the target class and `0.5 * label_smoothing` for the non-target class.
-     
+
      epsilon:               The epsilon used in the calcualtions.
-     
+
     Returns:
       Binary cross entropy loss value. shape = `[batch_size, d0, .. dN-1]`.
     """
-    
+
     # labels = tf.clip_by_value(labels, epsilon, 1. - epsilon)
-    
+
     if weights is not None:
         raise NotImplementedError
-    
+
     label_smoothing = tf.convert_to_tensor(label_smoothing, dtype=y_pred.dtype)
     if label_smoothing > 0:
         y_true = y_true * (1.0 - label_smoothing) + 0.5 * label_smoothing
-    
+
     labels, predictions = y_true, y_pred
     anti_labels, anti_predictions = (1 - labels), (1 - predictions)
-    
+
     if focus_credit > 0:
         anti_predictions += focus_credit
         anti_predictions = tf.clip_by_value(anti_predictions, 0, 1)
-    
+
     # Basic CE calculation
     bce = labels * tf.math.log(predictions + epsilon)
     bce += anti_labels * tf.math.log(anti_predictions + epsilon)
-    
+
     # Asymmetric Focusing
     if gamma_neg > 0 or gamma_pos > 0:
         xs_pos = tf.stop_gradient(predictions * labels)
         xs_neg = tf.stop_gradient(anti_predictions * anti_labels)
-        asymmetric_w = tf.stop_gradient(tf.pow(1 - xs_pos - xs_neg,
-                                               gamma_pos * labels + gamma_neg * anti_labels))
+        asymmetric_w = tf.stop_gradient(
+            tf.pow(1 - xs_pos - xs_neg, gamma_pos * labels + gamma_neg * anti_labels)
+        )
         bce *= asymmetric_w
     # bce = tf.reduce_mean(bce, axis=-1)  # mean over all classes
     return -bce
 
 
-def cross_entropy(y_true: TensorLike, y_pred: TensorLike, weights: Union[None, TensorLike] = None,
-                  label_smoothing: float = 0.0, axis=-1):
+def cross_entropy(
+    y_true: TensorLike,
+    y_pred: TensorLike,
+    weights: Union[None, TensorLike] = None,
+    label_smoothing: float = 0.0,
+    axis=-1,
+):
     """Computes the binary cross entropy loss.
         Standalone usage:
     >>> labels = [[0, 1], [0, 0]]
     >>> predictions = [[0.6, 0.4], [0.4, 0.6]]
     >>> loss = cross_entropy(labels, predictions)
     >>> loss.numpy()
-    
+
     array([0.916 , 0.714], dtype=float32)
     Args:
       y_true:               Ground truth values. shape = `[batch_size, d0, .. dN]`.
@@ -131,22 +145,22 @@ def cross_entropy(y_true: TensorLike, y_pred: TensorLike, weights: Union[None, T
                             for the target class and `0.5 * label_smoothing` for the non-target class.
       axis:                 The axis over which the cross entropy is calculated; default value is -1
                             This is normally the class/category axis.
-                            
+
     Returns:
       Binary cross entropy loss value. shape = `[batch_size, d0, .. dN-1]`.
     """
-    
+
     if weights is not None:
         raise NotImplementedError
-    
+
     label_smoothing = tf.convert_to_tensor(label_smoothing, dtype=y_pred.dtype)
     if label_smoothing > 0.0:
         num_classes = tf.cast(tf.shape(y_true)[-1], y_pred.dtype)
         y_true = y_true * (1.0 - label_smoothing) + (label_smoothing / num_classes)
-    
+
     epsilon_ = tf.constant(np.finfo(float).eps, y_pred.dtype)
     y_pred = y_pred / tf.reduce_sum(y_pred, axis=axis, keepdims=True)
-    output = tf.clip_by_value(y_pred, epsilon_, 1. - epsilon_)
+    output = tf.clip_by_value(y_pred, epsilon_, 1.0 - epsilon_)
     xentropy = -tf.reduce_sum(y_true * tf.math.log(output), axis)
     return xentropy
 
@@ -174,83 +188,105 @@ def hamming_distance(y_true: TensorLike, y_pred: TensorLike) -> tf.Tensor:
 
 
 class CrossEntropy(Loss):
-    def __init__(self, transform: Callable = lambda x: x, label_smoothing=0.0,
-                 reduction: Reduction = Reduction.AUTO,
-                 name: str = 'cross_entropy'):
+    def __init__(
+        self,
+        transform: Callable = lambda x: x,
+        label_smoothing=0.0,
+        reduction: Reduction = Reduction.AUTO,
+        name: str = "cross_entropy",
+    ):
         """Initializes `CrossEntropy` instance.
-          Args:
+        Args:
 
-            transform:          The transformation applied to the scores' tensor before calculation the loss
+          transform:          The transformation applied to the scores' tensor before calculation the loss
 
-            label_smoothing:    Float in [0, 1]. When 0, no smoothing occurs. When > 0,
-                                we compute the loss between the predicted labels and a smoothed version
-                                of the true labels, where the smoothing squeezes the labels towards 0.5.
-                                Larger values of `label_smoothing` correspond to heavier smoothing.
+          label_smoothing:    Float in [0, 1]. When 0, no smoothing occurs. When > 0,
+                              we compute the loss between the predicted labels and a smoothed version
+                              of the true labels, where the smoothing squeezes the labels towards 0.5.
+                              Larger values of `label_smoothing` correspond to heavier smoothing.
 
-            reduction:          Type of `tf.keras.losses.Reduction` to apply to
-                                loss. Default value is `AUTO`. `AUTO` indicates that the reduction
-                                option will be determined by the usage context. For almost all cases
-                                this defaults to `SUM_OVER_BATCH_SIZE`.
+          reduction:          Type of `tf.keras.losses.Reduction` to apply to
+                              loss. Default value is `AUTO`. `AUTO` indicates that the reduction
+                              option will be determined by the usage context. For almost all cases
+                              this defaults to `SUM_OVER_BATCH_SIZE`.
 
-            name:               Name for the op. Defaults to 'binary_cross_entropy'.
-          """
+          name:               Name for the op. Defaults to 'binary_cross_entropy'.
+        """
         super().__init__(reduction, name)
         self._transform = transform
         self._label_smoothing = label_smoothing
-    
-    def __call__(self, targets: TensorLike, scores: TensorLike, weights: TensorLike = None):
+
+    def __call__(
+        self, targets: TensorLike, scores: TensorLike, weights: TensorLike = None
+    ):
         predictions = self._transform(scores)
-        losses = cross_entropy(targets, y_pred=predictions, weights=weights,
-                               label_smoothing=self._label_smoothing,
-                               axis=-1)
+        losses = cross_entropy(
+            targets,
+            y_pred=predictions,
+            weights=weights,
+            label_smoothing=self._label_smoothing,
+            axis=-1,
+        )
         reduced_loss = reduce_loss(losses)
         return reduced_loss
 
 
 class BinaryCrossEntropy(Loss):
-    def __init__(self, transform: Callable = lambda x: x,
-                 focus_credit: float = 0.0, gamma_neg: float = 0.0, gamma_pos: float = 0.0,
-                 label_smoothing: float = 0.0,
-                 reduction=Reduction.AUTO, name='binary_cross_entropy'):
+    def __init__(
+        self,
+        transform: Callable = lambda x: x,
+        focus_credit: float = 0.0,
+        gamma_neg: float = 0.0,
+        gamma_pos: float = 0.0,
+        label_smoothing: float = 0.0,
+        reduction=Reduction.AUTO,
+        name="binary_cross_entropy",
+    ):
         """Initializes `BinaryCrossEntropy` instance.
-          
-          Args:
-            transform:          The transformation applied to the scores' tensor before calculation the loss.
-     
-            focus_credit:       Provides asymmetric clipping. Adds some constant slack to the p- .This is done
-                                to ensure an increased focus, by a constant value, for positive class detection.
-    
-            gamma_pos:          Controls the weighing of the penalty for (true/false) negative detection.
-            
-            gamma_neg:          Controls the weighting of the penalty for (true/false) positive detection.
-      
 
-            label_smoothing:    Float in [0, 1]. When 0, no smoothing occurs. When > 0,
-                                we compute the loss between the predicted labels and a smoothed version
-                                of the true labels, where the smoothing squeezes the labels towards 0.5.
-                                Larger values of `label_smoothing` correspond to heavier smoothing.
+        Args:
+          transform:          The transformation applied to the scores' tensor before calculation the loss.
 
-            reduction:          Type of `tf.keras.losses.Reduction` to apply to
-                                loss. Default value is `AUTO`. `AUTO` indicates that the reduction
-                                option will be determined by the usage context. For almost all cases
-                                this defaults to `SUM_OVER_BATCH_SIZE`.
+          focus_credit:       Provides asymmetric clipping. Adds some constant slack to the p- .This is done
+                              to ensure an increased focus, by a constant value, for positive class detection.
 
-            name:               Name for the op. Defaults to 'binary_cross_entropy'.
-          """
+          gamma_pos:          Controls the weighing of the penalty for (true/false) negative detection.
+
+          gamma_neg:          Controls the weighting of the penalty for (true/false) positive detection.
+
+
+          label_smoothing:    Float in [0, 1]. When 0, no smoothing occurs. When > 0,
+                              we compute the loss between the predicted labels and a smoothed version
+                              of the true labels, where the smoothing squeezes the labels towards 0.5.
+                              Larger values of `label_smoothing` correspond to heavier smoothing.
+
+          reduction:          Type of `tf.keras.losses.Reduction` to apply to
+                              loss. Default value is `AUTO`. `AUTO` indicates that the reduction
+                              option will be determined by the usage context. For almost all cases
+                              this defaults to `SUM_OVER_BATCH_SIZE`.
+
+          name:               Name for the op. Defaults to 'binary_cross_entropy'.
+        """
         super().__init__(reduction, name)
         self._transform = transform
         self._focus_credit = focus_credit
         self._gamma_pos = gamma_pos
         self._gamma_neg = gamma_neg
         self._label_smoothing = label_smoothing
-    
-    def __call__(self, targets: TensorLike, scores: TensorLike, weights: TensorLike = None):
+
+    def __call__(
+        self, targets: TensorLike, scores: TensorLike, weights: TensorLike = None
+    ):
         predictions = self._transform(scores)
-        losses = binary_cross_entropy(targets, y_pred=predictions, weights=weights,
-                                      focus_credit=self._focus_credit,
-                                      gamma_pos=self._gamma_pos,
-                                      gamma_neg=self._gamma_neg,
-                                      label_smoothing=self._label_smoothing)
+        losses = binary_cross_entropy(
+            targets,
+            y_pred=predictions,
+            weights=weights,
+            focus_credit=self._focus_credit,
+            gamma_pos=self._gamma_pos,
+            gamma_neg=self._gamma_neg,
+            label_smoothing=self._label_smoothing,
+        )
         reduced_loss = reduce_loss(losses)
         return reduced_loss
 
@@ -274,18 +310,22 @@ class HammingLoss(Loss):
 
 
 class CumulativeMAE(tf.keras.losses.Loss):
-    
+
     def get_config(self):
-        return getattr(self, 'params', dict())
-    
+        return getattr(self, "params", dict())
+
     @capture_params
     def __init__(self, accumulation_axis=-1, **kwargs):
-        super().__init__(name=kwargs.pop('name', None))
+        super().__init__(name=kwargs.pop("name", None))
         self.axis = accumulation_axis
         self.tf2_mae_loss = tf.keras.losses.MeanAbsoluteError(**kwargs)
-    
-    def call(self, y_true: TensorLike, y_pred: TensorLike,
-             sample_weight: Union[None, TensorLike] = None) -> tf.Tensor:
+
+    def call(
+        self,
+        y_true: TensorLike,
+        y_pred: TensorLike,
+        sample_weight: Union[None, TensorLike] = None,
+    ) -> tf.Tensor:
         """Computes cumulative mae loss.
         Args:
             y_true: actual target value.

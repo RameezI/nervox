@@ -190,7 +190,7 @@ class Module(tf.Module, ABC):
             trainable (bool, optional): Weather the module variables are trainable.
                                         Defaults to True.
 
-            dtype (tf.DType):           The dtype of the module variables. 
+            dtype (tf.DType):           The dtype of the module variables.
                                         Defaults to tf.float32.
 
             name (str, optional):       The name of the module this name scope is prepended
@@ -215,7 +215,7 @@ class Module(tf.Module, ABC):
                 "Expected `trainable` argument to be of type boolean, "
                 f"but got: {trainable}: {type(trainable).__name__}"
             )
-        
+
         if not isinstance(dtype, tf.DType):
             raise TypeError(
                 "Expected `dtype` argument to be of type tf.DType, "
@@ -245,7 +245,7 @@ class Module(tf.Module, ABC):
         self,
         input_shape: Union[
             tf.TensorShape, Collection[tf.TensorShape], Mapping[str, tf.TensorShape]
-        ]
+        ],
     ):
         """Create variables of the module.
         This is a method that implementers of subclasses of `nervox.Module` must override
