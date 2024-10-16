@@ -26,18 +26,18 @@ import tensorflow as tf
 def scale_gradient(
     t: tf.Tensor, scale: types.FloatLike
 ) -> Tuple[tf.Tensor, types.GradFn]:
-  """Scales gradients for the backwards pass.
+    """Scales gradients for the backwards pass.
 
-  Args:
-    t: A Tensor.
-    scale: The scale factor for the gradient on the backwards pass.
+    Args:
+      t: A Tensor.
+      scale: The scale factor for the gradient on the backwards pass.
 
-  Returns:
-    A Tensor same as input, with scaled backward gradient.
-  """
+    Returns:
+      A Tensor same as input, with scaled backward gradient.
+    """
 
-  def grad(dy: tf.Tensor) -> Tuple[tf.Tensor, None]:
-    """Scaled gradient."""
-    return scale * dy, None
+    def grad(dy: tf.Tensor) -> Tuple[tf.Tensor, None]:
+        """Scaled gradient."""
+        return scale * dy, None
 
-  return t, grad
+    return t, grad

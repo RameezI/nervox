@@ -34,7 +34,7 @@ def onehot_transform(x: TensorLike, axis=-1) -> tf.Tensor:
 
     Returns:
         tf.Tensor:      The onehot encoding of the input tensor. The class with the
-                        highest score is set to `1` and the rest are set to `0`.   
+                        highest score is set to `1` and the rest are set to `0`.
     """
     indices = tf.argmax(x, axis=axis)
     onehot_predictions = tf.one_hot(indices, depth=x.shape[axis])
@@ -55,7 +55,7 @@ def multihot_transform(x: TensorLike, threshold=0.5) -> tf.Tensor:
 
     Returns:
         tf.Tensor:          The multi-hot encoding of the input tensor. The class with the
-                            score above threshold is set to 1 and the rest are set to 0.   
+                            score above threshold is set to 1 and the rest are set to 0.
     """
 
     multihot_encoding = tf.cast(x > threshold, x.dtype)

@@ -82,7 +82,7 @@ class Classification(Protocol):
         objective.update_metrics(labels, predictions)
         return {metric.name: metric.result() for metric in self.metrics}
 
-    def evaluate_step(self, batch: Dict[str, tf.Tensor])-> None:
+    def evaluate_step(self, batch: Dict[str, tf.Tensor]) -> None:
         data, labels = batch[self.supervision_keys[0]], batch[self.supervision_keys[1]]
 
         # aliases

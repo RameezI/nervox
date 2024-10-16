@@ -61,12 +61,10 @@ class Initializer:
 
         cls.__init__ = __wrapped_init
 
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
     @abc.abstractmethod
-    def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
-        ...
+    def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor: ...
 
 
 class Zeros(Initializer):
@@ -136,6 +134,7 @@ class RandomUniform(Initializer):
             dtype=dtype,
             seed=self.seed,
         )
+
 
 class RandomNormal(Initializer):
     """Initializer that generates tensors with a normal distribution."""
@@ -366,7 +365,7 @@ class VarianceScaling(Initializer):
         fan_in, fan_out = _compute_fans(shape)
         fan_in = tf.cast(fan_in, dtype)
         fan_out = tf.cast(fan_out, dtype)
-        
+
         # normalize the scale as per the mode
         if self.mode == "fan_in":
             scale /= fan_in
@@ -393,6 +392,7 @@ class VarianceScaling(Initializer):
                 shape=shape, minval=-limit, maxval=limit, dtype=dtype, seed=self.seed
             )
 
+
 # -----------------------------------------------------------------------------
 # specializations of VarianceScaling
 class GlorotUniform(VarianceScaling):
@@ -403,9 +403,11 @@ class GlorotUniform(VarianceScaling):
             distribution="uniform",
             seed=seed,
         )
+
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
         return super().__call__(shape, dtype)
-    
+
+
 class GlorotNormal(VarianceScaling):
     def __init__(self, seed: Optional[int] = None):
         super().__init__(
@@ -414,8 +416,10 @@ class GlorotNormal(VarianceScaling):
             distribution="truncated_normal",
             seed=seed,
         )
+
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
         return super().__call__(shape, dtype)
+
 
 class LecunUniform(VarianceScaling):
     def __init__(self, seed: Optional[int] = None):
@@ -425,8 +429,10 @@ class LecunUniform(VarianceScaling):
             distribution="uniform",
             seed=seed,
         )
+
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
         return super().__call__(shape, dtype)
+
 
 class LecunNormal(VarianceScaling):
     def __init__(self, seed: Optional[int] = None):
@@ -436,9 +442,11 @@ class LecunNormal(VarianceScaling):
             distribution="truncated_normal",
             seed=seed,
         )
+
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
         return super().__call__(shape, dtype)
-    
+
+
 class HeUniform(VarianceScaling):
     def __init__(self, seed: Optional[int] = None):
         super().__init__(
@@ -447,8 +455,10 @@ class HeUniform(VarianceScaling):
             distribution="uniform",
             seed=seed,
         )
+
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
         return super().__call__(shape, dtype)
+
 
 class HeNormal(VarianceScaling):
     def __init__(self, seed: Optional[int] = None):
@@ -458,8 +468,10 @@ class HeNormal(VarianceScaling):
             distribution="truncated_normal",
             seed=seed,
         )
+
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
-        return super().__call__(shape, dtype)   
+        return super().__call__(shape, dtype)
+
 
 class KaimingUniform(VarianceScaling):
     def __init__(self, seed: Optional[int] = None):
@@ -469,8 +481,10 @@ class KaimingUniform(VarianceScaling):
             distribution="uniform",
             seed=seed,
         )
+
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
         return super().__call__(shape, dtype)
+
 
 class KaimingNormal(VarianceScaling):
     def __init__(self, seed: Optional[int] = None):
@@ -480,9 +494,13 @@ class KaimingNormal(VarianceScaling):
             distribution="truncated_normal",
             seed=seed,
         )
+
     def __call__(self, shape: types.ShapeLike, dtype: tf.DType) -> tf.Tensor:
         return super().__call__(shape, dtype)
+
+
 # -----------------------------------------------------------------------------
+
 
 def check_initializers(
     initializers: Mapping[str, Initializer], expected_keys: Iterable[str]

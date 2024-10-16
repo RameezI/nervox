@@ -16,6 +16,7 @@
 
 import os
 import argparse
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from nervox import Trainer
@@ -34,11 +35,13 @@ from nervox.utils import onehot_transform
 
 def objective_configurer() -> Objective:
     import tensorflow as tf
+
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     xentropy = CrossEntropy(transform=tf.nn.sigmoid)
     accuracy = AccuracyScore(onehot_transform, averaging_mode=AveragingMode.SAMPLE)
     objective = Objective(xentropy, optimizer=optimizer, metrics=[accuracy])
     return objective
+
 
 def train(args: argparse.Namespace):
     # data stream for training

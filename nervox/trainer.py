@@ -105,7 +105,7 @@ class Trainer:
             eval_stream:       A `DataStream` or `tf.data.Dataset` object, which provides the evaluation data.
             logs_dir:          The directory where the logs will be stored. If not provided, the logs will be stored in a default location.
                                 default: ~/tensorflow_logs
-            name:              The pursuit name, this defines a collection of training runs. 
+            name:              The pursuit name, this defines a collection of training runs.
             run_id:            Unique identifier for the run. If not provided, a timestamp will be generated as UUID.
             distributor:       The distribution strategy to be used for training. If not provided, the training will be done on a single device.
                                Refer to the documentation on [distribution strategies](https://www.tensorflow.org/guide/distributed_training)
@@ -581,13 +581,17 @@ class Trainer:
         self.write_config_to_disk()
 
         # Printing the configuration
-        print(
-            f"\n{'':-<{self._progress_bar.terminal_size - margin}}"
-        ) if verbose not in [VerbosityLevel.KEEP_SILENT] else None
+        (
+            print(f"\n{'':-<{self._progress_bar.terminal_size - margin}}")
+            if verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
         print(f"\n{self.name}/{self.run_id}:")
-        print(json.dumps(self.to_json(), indent=4)) if verbose not in [
-            VerbosityLevel.KEEP_SILENT
-        ] else None
+        (
+            print(json.dumps(self.to_json(), indent=4))
+            if verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
 
         try:
             # Profile the underlying predict method to estimate FLOPS & Parameters
@@ -621,9 +625,11 @@ class Trainer:
         if not kwargs.pop("skip_initial_evaluation", False):
             self._progress_bar.mode = ModeProgressBar.EVAL_ONLY
             split_name = eval_stream.split_name
-            print(f"Evaluation on the `{split_name}` split:") if verbose not in [
-                VerbosityLevel.KEEP_SILENT
-            ] else None
+            (
+                print(f"Evaluation on the `{split_name}` split:")
+                if verbose not in [VerbosityLevel.KEEP_SILENT]
+                else None
+            )
 
             samples_init_eval = (
                 self._eval_samples_count if do_validation else self._train_samples_count
@@ -642,18 +648,24 @@ class Trainer:
         # if warm_start and os.path.isfile(Path(self.checkpoint_dir, 'checkpoint')):
         #     ckpt_load_status.assert_consumed()
 
-        print(
-            f"\n{'':-^{self._progress_bar.terminal_size - margin}}"
-        ) if verbose not in [VerbosityLevel.KEEP_SILENT] else None
+        (
+            print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}")
+            if verbose not in [VerbosityLevel.KEEP_SILENT]
+            else None
+        )
 
         callbacks.on_train_begin(logs=logs_init_eval)
         if self._epoch.value() >= max_epochs:
-            print(
-                f"Exiting ...\n"
-                f"The maximum epochs have already been reached.\n"
-                f"Restored epoch == {int(self._epoch.value())}\n"
-                f"Allowed epochs == {max_epochs}\n"
-            ) if verbose not in [VerbosityLevel.KEEP_SILENT] else None
+            (
+                print(
+                    f"Exiting ...\n"
+                    f"The maximum epochs have already been reached.\n"
+                    f"Restored epoch == {int(self._epoch.value())}\n"
+                    f"Allowed epochs == {max_epochs}\n"
+                )
+                if verbose not in [VerbosityLevel.KEEP_SILENT]
+                else None
+            )
             callbacks.on_train_end()
         else:
             start_epoch = int(self._epoch.assign_add(1).value())
@@ -698,9 +710,11 @@ class Trainer:
                 )
             callbacks.on_train_end()
 
-            print(
-                f"\n{'':-^{self._progress_bar.terminal_size - margin}}\n"
-            ) if verbose not in [VerbosityLevel.KEEP_SILENT] else None
+            (
+                print(f"\n{'':-^{self._progress_bar.terminal_size - margin}}\n")
+                if verbose not in [VerbosityLevel.KEEP_SILENT]
+                else None
+            )
 
     def to_json(self):
         config = {

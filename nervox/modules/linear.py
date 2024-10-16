@@ -27,64 +27,67 @@ import tensorflow as tf
 
 
 class Linear(base.Module):
-  """Linear module, optionally including bias."""
+    """Linear module, optionally including bias."""
 
-  def __init__(self,
-               output_size: int,
-               with_bias: bool = True,
-               w_init: Optional[initializers.Initializer] = None,
-               b_init: Optional[initializers.Initializer] = None,
-               name: Optional[str] = None):
-    """Constructs a `Linear` module.
+    def __init__(
+        self,
+        output_size: int,
+        with_bias: bool = True,
+        w_init: Optional[initializers.Initializer] = None,
+        b_init: Optional[initializers.Initializer] = None,
+        name: Optional[str] = None,
+    ):
+        """Constructs a `Linear` module.
 
-    Args:
-      output_size: Output dimensionality.
-      with_bias: Whether to include bias parameters. Default `True`.
-      w_init: Optional initializer for the weights. By default the weights are
-        initialized truncated random normal values with a standard deviation of
-        `1 / sqrt(input_feature_size)`, which is commonly used when the inputs
-        are zero centered (see https://arxiv.org/abs/1502.03167v3).
-      b_init: Optional initializer for the bias. By default the bias is
-        initialized to zero.
-      name: Name of the module.
-    """
-    super().__init__(name=name)
-    self.output_size = output_size
-    self.with_bias = with_bias
-    self.w_init = w_init
-    if with_bias:
-      self.b_init = b_init if b_init is not None else initializers.Zeros()
-    elif b_init is not None:
-      raise ValueError("When not using a bias the b_init must be None.")
+        Args:
+          output_size: Output dimensionality.
+          with_bias: Whether to include bias parameters. Default `True`.
+          w_init: Optional initializer for the weights. By default the weights are
+            initialized truncated random normal values with a standard deviation of
+            `1 / sqrt(input_feature_size)`, which is commonly used when the inputs
+            are zero centered (see https://arxiv.org/abs/1502.03167v3).
+          b_init: Optional initializer for the bias. By default the bias is
+            initialized to zero.
+          name: Name of the module.
+        """
+        super().__init__(name=name)
+        self.output_size = output_size
+        self.with_bias = with_bias
+        self.w_init = w_init
+        if with_bias:
+            self.b_init = b_init if b_init is not None else initializers.Zeros()
+        elif b_init is not None:
+            raise ValueError("When not using a bias the b_init must be None.")
 
-  @once.once
-  def _initialize(self, inputs: tf.Tensor):
-    """Constructs parameters used by this module."""
-    utils.assert_minimum_rank(inputs, 2)
+    @once.once
+    def _initialize(self, inputs: tf.Tensor):
+        """Constructs parameters used by this module."""
+        utils.assert_minimum_rank(inputs, 2)
 
-    input_size = inputs.shape[-1]
-    if input_size is None:  # Can happen inside an @tf.function.
-      raise ValueError("Input size must be specified at module build time.")
+        input_size = inputs.shape[-1]
+        if input_size is None:  # Can happen inside an @tf.function.
+            raise ValueError("Input size must be specified at module build time.")
 
-    self.input_size = input_size
+        self.input_size = input_size
 
-    if self.w_init is None:
-      # See https://arxiv.org/abs/1502.03167v3.
-      stddev = 1 / math.sqrt(self.input_size)
-      self.w_init = initializers.TruncatedNormal(stddev=stddev)
+        if self.w_init is None:
+            # See https://arxiv.org/abs/1502.03167v3.
+            stddev = 1 / math.sqrt(self.input_size)
+            self.w_init = initializers.TruncatedNormal(stddev=stddev)
 
-    self.w = tf.Variable(
-        self.w_init([self.input_size, self.output_size], inputs.dtype),
-        name="w")
+        self.w = tf.Variable(
+            self.w_init([self.input_size, self.output_size], inputs.dtype), name="w"
+        )
 
-    if self.with_bias:
-      self.b = tf.Variable(
-          self.b_init([self.output_size], inputs.dtype), name="b")
+        if self.with_bias:
+            self.b = tf.Variable(
+                self.b_init([self.output_size], inputs.dtype), name="b"
+            )
 
-  def __call__(self, inputs: tf.Tensor) -> tf.Tensor:
-    self._initialize(inputs)
+    def __call__(self, inputs: tf.Tensor) -> tf.Tensor:
+        self._initialize(inputs)
 
-    outputs = tf.matmul(inputs, self.w)
-    if self.with_bias:
-      outputs = tf.add(outputs, self.b)
-    return outputs
+        outputs = tf.matmul(inputs, self.w)
+        if self.with_bias:
+            outputs = tf.add(outputs, self.b)
+        return outputs

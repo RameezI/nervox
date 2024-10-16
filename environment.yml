@@ -2,16 +2,7 @@ name: nervox
 
 channels:
   - conda-forge
-  - nvidia
-
+  
 dependencies:
-  - python=3.12
-  - ffmpeg
+  - python=3.10
   - pip
-  - pip:
-    - numpy
-    - pandas
-    - matplotlib
-    - scikit-learn
-    - tensorflow[and-cuda]
-    - tensorflow-datasets

@@ -1,0 +1,111 @@
+name: Pull Request
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, edited ]
+  workflow_dispatch:
+
+
+permissions:
+  contents: write
+  checks: write
+  issues: write
+  pull-requests: write
+  actions: read
+
+env:
+  # if the number of suggenstion is greater than this, a PR will be created.
+  MAX_FORMATING_SUGGESTIONS: 20
+
+
+jobs:
+
+  Linting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff
+
+      - name: Setup ReviewDog
+        uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
+      - name: Setup Black
+        uses:  psf/black@stable
+        id: action_black
+        with:
+          options: ""
+          src: "."
+
+      - name: Check for Pyton File Changes
+        id: diff_python
+        run: ./.github/workflows/diff_python.sh
+
+      - name: Create Pull Request [Black]
+        if: >
+            steps.diff_python.outputs.files_formatted &&
+            steps.diff_python.outputs.hunks >= env.MAX_FORMATING_SUGGESTIONS
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.ACTION_PULL_REQUEST }}
+          title: "Format Python code with psf/black push"
+          commit-message: ":art: Format Python code with psf/black"
+          body: |
+            There appear to be some python formatting errors in ${{ github.sha }}. This pull request
+            uses the [psf/black](https://github.com/psf/black) formatter to fix these issues.
+          base: ${{ github.head_ref }}
+          branch: actions/black
+
+      - name: Create Suggestions within PR [Black]
+        if: >
+            steps.diff_python.outputs.files_formatted && 
+            steps.diff_python.outputs.hunks < env.MAX_FORMATING_SUGGESTIONS
+        run: |
+          set -euxo pipefail
+          echo "Running Black"
+          TEMPFILE="$(mktemp)"
+          git diff > $TEMPFILE
+          git stash -u || true
+          git stash drop || true
+          reviewdog -f=diff\
+                    -name=BLACK\
+                    -reporter=github-pr-review\
+                    -filter-mode='nofilter'\
+                    -fail-level=error\
+                    -diff="git diff FETCH_HEAD"\
+                    -level=warning\
+                    -tee < $TEMPFILE
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          
+  security-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Bandit Scan
+        uses: shundor/python-bandit-scan@9cc5aa4a006482b8a7f91134412df6772dbda22c
+        with: 
+          exit_zero: true 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
