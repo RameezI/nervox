@@ -1,10 +1,7 @@
-# Copyright(c) 2023 Rameez Ismail - All Rights Reserved
-# Author: Rameez Ismail
-# Email: rameez.ismaeel@gmail.com
-#
+# Copyright © 2023 Rameez Ismail - All Rights Reserved
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# You may obtain a copy of the License at:
 #
 #    http://www.apache.org/licenses/LICENSE-2.0
 #
@@ -13,6 +10,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Author(s): Rameez Ismail
+# Email(s):  rameez.ismaeel@gmail.com
+# 
+# This code is adapted from Sonnet by DeepMind: 
+# https://github.com/deepmind/sonnet
+# The project is licensed under the Apache-2.0. 
+# You may obtain a copy of the license at:
+# http://www.apache.org/licenses/LICENSE-2.0
 
 """Convolutional modules."""
 
@@ -121,13 +127,13 @@ class ConvND(Module):
 
         try:
             kernel_size = tuple(
-                np.broadcast_to(self.kernel_size, (self.num_spatial_dims,))
+                np.broadcast_to(kernel_size, (num_spatial_dims,))
             )
         except ValueError as e:
             logger.error(str(e))
             raise ValueError(
                 "kernel_size must be a single integer or a sequence of integers"
-                f"of length {self.num_spatial_dims}.\n"
+                f"of length {num_spatial_dims}.\n"
             )
 
         self.kernel_size = kernel_size
@@ -143,6 +149,7 @@ class ConvND(Module):
 
         self.data_format = data_format
         self._channel_index = get_channel_index(data_format)
+        self._num_spatial_dims = num_spatial_dims
         self.with_bias = with_bias
 
         self.kernel_init = kernel_init
@@ -166,10 +173,9 @@ class ConvND(Module):
 
         Args:
             input_shape (tf.TensorShape):  The input shape to the module `call` function.
-                                            This is used to create the initial kernel
-                                            and bias variables, which will be updated
-                                            during the training process.
-
+                                           This is used to create the kernel and bias variables,
+                                           which will be updated during the training process.
+                                           The first dimension is the batch dimension.
         Raises:
             ValueError:   When the input shape has an invalid rank. The expected rank
                           is `num_spatial_dims + 2`. The additional two dimensions are
@@ -196,7 +202,7 @@ class ConvND(Module):
 
         # bias shape is [output_channels]
         if self.with_bias:
-            self.b = tf.Variable(
+            self.bias = tf.Variable(
                 self.bias_init((self.output_channels,), self._dtype),
                 name="bias",
             )
@@ -225,14 +231,14 @@ class ConvND(Module):
 
         outputs = tf.nn.convolution(
             inputs,
-            self.w,
+            self.kernel,
             strides=self.stride,
             padding=self.conv_padding,
             dilations=self.rate,
             data_format=self.data_format,
         )
         if self.with_bias:
-            outputs = tf.nn.bias_add(outputs, self.b, data_format=self.data_format)
+            outputs = tf.nn.bias_add(outputs, self.bias, data_format=self.data_format)
 
         return outputs
 
@@ -494,3 +500,13 @@ class Conv1D(ConvND):
             name,
             dtype,
         )
+
+
+
+if __name__ == "__main__":
+    N, D, H, W, C = 1, 10, 16, 16, 3
+    x = tf.random.normal([N, D, H, W, C], dtype=tf.float32)
+    conv3d = Conv3D(output_channels=16, kernel_size=3)
+    conv3d_output = conv3d(x)
+    print(conv3d_output)
+    print(conv3d.params)

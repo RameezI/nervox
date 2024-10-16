@@ -24,7 +24,7 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import tensorflow as tf
 from nervox.data import DataStream
-from nervox.modules.vision_decoders import MLDecoder
+from nervox.modules.vision.decoders import MLDecoder
 
 
 def convert_to_tensors(*args):

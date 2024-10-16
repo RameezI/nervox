@@ -19,9 +19,7 @@
     The serializers are used to serialize the objects to JSON format.   
 """
 import inspect
-from typing import Any
 import tensorflow as tf
-from types import FunctionType
 
 
 def serializer_dtype(obj: tf.DType):
@@ -38,37 +36,18 @@ def serializer_dtype(obj: tf.DType):
         "__repr__": repr(obj),
     }
 
-
-def serializer_tensorshape(obj: tf.TensorShape):
-    if not isinstance(obj, tf.TensorShape):
+def serializer_slice(obj: slice):
+    if not isinstance(obj, slice):
         raise TypeError(
             f"Invalid type spotted:"
-            "\nExpected: tf.TensorShape"
+            "\nExpected: slice"
             "\nReceived: {type(obj).__name__}"
         )
     return {
-        "__class__": "TensorShape",
-        "__module__": "tensorflow",
-        "__init__": {"_args": [tuple(obj.as_list())]},
-    }
-
-
-def serializer_functiontype(obj: FunctionType):
-    if not isinstance(obj, FunctionType):
-        raise TypeError(
-            f"Invalid type spotted:"
-            "\nExpected a callable `FunctionType`, no methods allowed."
-            "\nReceived: `{type(obj).__name__}`"
-        )
-
-    class Stub:
-        def __init__(self) -> None:
-            pass
-
-    return {
-        "__class__": type(obj).__name__,
-        "__module__": obj.__module__,
-        obj.__name__: {"_args": [obj.__name__]},
+        "__class__": 'slice',
+        "__module__": 'builtins',
+        "__init__": {'_args': (obj.start, obj.stop, obj.step)},
+        "__repr__": repr(obj),
     }
 
 
@@ -109,6 +88,7 @@ class SerializerRegistry:
 
     _serializers = {
         tf.DType: serializer_dtype,
+        slice:  serializer_slice
     }
 
     @classmethod

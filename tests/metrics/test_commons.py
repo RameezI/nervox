@@ -87,17 +87,12 @@ class TestMeanMetrics(tf.test.TestCase):
         )
         mean.update(values)
         self.assertAllClose(expectation, mean.result())
-
-        mean = Mean(axis=1, keep_dims=True)
-        expectation = [[[10.0, 20.0]], [[10, 20]], [[5, 5]], [[10.0, 15.0]]]
-        values = tf.constant(
-            [
-                [[11.0, 17.4], [9.0, 22.6]],
-                [[9, 22.6], [11.0, 17.4]],
-                [[2, 8.0], [8.0, 2.0]],
-                [[15, 22], [5.0, 8.0]],
-            ]
-        )
+        
+        mean = Mean(axis=1, keepdims=True)
+        expectation = [[[10., 20.]], [[10, 20]], [[5, 5]], [[10., 15.]]]
+        values = tf.constant([[[11., 17.4], [9., 22.6]], [[9, 22.6], [11., 17.4]],
+                              [[2, 8.], [8., 2.]], [[15, 22], [5., 8.]]
+                              ])
         mean.update(values)
         self.assertAllClose(expectation, mean.result())
 

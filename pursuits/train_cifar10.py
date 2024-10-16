@@ -23,11 +23,9 @@ from nervox import Trainer
 from nervox.objectives import Objective
 from nervox.protocols import Classification
 from nervox.utils import base_parser, VerbosityLevel
-
-from nervox.modules import Module
-
 from nervox.data import DataStream
 from nervox.data.transforms import Normalize, OneHotLabels
+from nervox.modules import GlobalAvgPoolDecoder
 
 # objective configurator
 from nervox.losses import CrossEntropy

@@ -30,18 +30,18 @@ Example:
 """
 
 __all__ = [
-    "DenseNet121",
-    "DenseNet169",
-    "DenseNet201",
-    "MobileNetV1",
-    "MobileNetV2",
-    "Xception",
-    "InceptionV3",
-    "EfficientNetB0",
-    "EfficientNetB1",
-    "EfficientNetB2",
-    "EfficientNetB3",
-    "EfficientNetB4",
+    "DenseNet121Encoder",
+    "DenseNet169Encoder",
+    "DenseNet201Encoder",
+    "MobileNetV1Encoder",
+    "MobileNetV2Encoder",
+    "XceptionEncoder",
+    "InceptionV3Encoder",
+    "EfficientNetB0Encoder",
+    "EfficientNetB1Encoder",
+    "EfficientNetB2Encoder",
+    "EfficientNetB3Encoder",
+    "EfficientNetB4Encoder",
 ]
 
 
@@ -71,7 +71,7 @@ class KerasEncoder(tf.keras.Model):
         return x
 
 
-class DenseNet121(KerasEncoder):
+class DenseNet121Encoder(KerasEncoder):
     @capture_params
     def __init__(
         self,
@@ -88,7 +88,7 @@ class DenseNet121(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class DenseNet169(KerasEncoder):
+class DenseNet169Encoder(KerasEncoder):
     @capture_params
     def __init__(
         self,
@@ -105,7 +105,7 @@ class DenseNet169(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class DenseNet201(KerasEncoder):
+class DenseNet201Encoder(KerasEncoder):
     @capture_params
     def __init__(
         self,
@@ -122,7 +122,7 @@ class DenseNet201(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class MobileNetV1(KerasEncoder):
+class MobileNetV1Encoder(KerasEncoder):
 
     @capture_params
     def __init__(
@@ -140,7 +140,7 @@ class MobileNetV1(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class MobileNetV2(KerasEncoder):
+class MobileNetV2Encoder(KerasEncoder):
 
     @capture_params
     def __init__(
@@ -157,7 +157,7 @@ class MobileNetV2(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class Xception(KerasEncoder):
+class XceptionEncoder(KerasEncoder):
 
     @capture_params
     def __init__(
@@ -174,7 +174,7 @@ class Xception(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class InceptionV3(KerasEncoder):
+class InceptionV3Encoder(KerasEncoder):
 
     @capture_params
     def __init__(
@@ -191,7 +191,7 @@ class InceptionV3(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB0(KerasEncoder):
+class EfficientNetB0Encoder(KerasEncoder):
 
     @capture_params
     def __init__(
@@ -209,7 +209,7 @@ class EfficientNetB0(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB1(KerasEncoder):
+class EfficientNetB1Encoder(KerasEncoder):
 
     @capture_params
     def __init__(
@@ -226,7 +226,7 @@ class EfficientNetB1(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB2(KerasEncoder):
+class EfficientNetB2Encoder(KerasEncoder):
     @capture_params
     def __init__(
         self,
@@ -242,7 +242,7 @@ class EfficientNetB2(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB3(KerasEncoder):
+class EfficientNetB3Encoder(KerasEncoder):
     @capture_params
     def __init__(
         self,
@@ -258,7 +258,7 @@ class EfficientNetB3(KerasEncoder):
         super().__init__(preprocessor, model, trainable=trainable)
 
 
-class EfficientNetB4(KerasEncoder):
+class EfficientNetB4Encoder(KerasEncoder):
 
     @capture_params
     def __init__(

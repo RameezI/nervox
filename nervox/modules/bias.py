@@ -78,28 +78,33 @@ class Bias(Module):
         dtype: Optional[tf.DType] = tf.float32,
         name: Optional[str] = None,
     ):
-        """Constructs a `Bias` module that supports broadcasting.
+        """Constructs a `Bias` module that supports broadcasting. This modules creates & applies
+        a bias variable to the input, the bias is applied only to the specified dims.
 
         Args:
-          dims:         Sequence of which dimensions to retain from the input shape
-                        when constructing the bias. The remaining dimensions will be broadcast
-                        over (i.e. given a size of 1), and leading dimensions will be removed
-                        completely. See class doc for examples.
+          dims:         Sequence of which dimensions in the input the bias is applied to.
+                        The leading dimensions are emitted, while intermediate and trailing
+                        dimensions  are broadcasted over (given a dimension of 1).
           initializer:  Optional initializer for the bias. Default to zeros.
           name:         Name of the module.
         """
+
         # fmt: off
         super().__init__(name=name, dtype=dtype)
         self.dims = dims
         self.initializer = initializers.Zeros() \
           if initializer is None else initializer
+        
+        # variables to be created
+        self._bias = None
         # fmt: on
 
     def build(self, input_shape):
-        bias_shape = calculate_bias_shape(input_shape, self.dims)
-        input_size = input_shape[1:]
-        self.input_size = input_size
-        self._bias = tf.Variable(self.initializer(bias_shape, self.dtype), name="bias")
+        with tf.name_scope(self.name):
+            bias_shape = calculate_bias_shape(input_shape, self.dims)
+            input_size = input_shape[1:]
+            self.input_size = input_size
+            self._bias = tf.Variable(self.initializer(bias_shape, self.dtype), name="bias")
 
     def compute(self, inputs: tf.Tensor, multiplier: Optional[float] = None):
         """Adds bias to `inputs` and optionally multiplies by `multiplier`.
