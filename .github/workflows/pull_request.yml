@@ -22,7 +22,8 @@ env:
 
 
 jobs:
-  Linter:
+
+  Linting:
     runs-on: ubuntu-latest
 
     steps:
