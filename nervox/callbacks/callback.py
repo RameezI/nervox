@@ -18,6 +18,7 @@ import tensorflow as tf
 from abc import abstractmethod
 from typing import final, Sequence, Mapping, Any
 
+
 class Callback:
     """Abstract base class used to build new callbacks.
     Callbacks can be passed to nervox trainer through `spin`, in order to hook into the
