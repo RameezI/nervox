@@ -142,8 +142,8 @@ class LayerNorm(Module):
 
         # Turns slice definition into list of axis
         if isinstance(self._axis, slice):
-          axes = tuple(range(self._rank))
-          self._axis = axes[self._axis]
+            axes = tuple(range(self._rank))
+            self._axis = axes[self._axis]
 
         # Create scale and offset variables
         if self._channel_index == -1:

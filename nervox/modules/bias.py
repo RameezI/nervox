@@ -104,7 +104,9 @@ class Bias(Module):
             bias_shape = calculate_bias_shape(input_shape, self.dims)
             input_size = input_shape[1:]
             self.input_size = input_size
-            self._bias = tf.Variable(self.initializer(bias_shape, self.dtype), name="bias")
+            self._bias = tf.Variable(
+                self.initializer(bias_shape, self.dtype), name="bias"
+            )
 
     def compute(self, inputs: tf.Tensor, multiplier: Optional[float] = None):
         """Adds bias to `inputs` and optionally multiplies by `multiplier`.

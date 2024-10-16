@@ -86,7 +86,7 @@ class Cifar10(FlowSpec):
         from nervox.data.transforms import Normalize, OneHotLabels
         from nervox.data import DataStream
         from nervox.utils import VerbosityLevel
-        from nervox.modules.vision.decoders  import GlobalAvgPoolDecoder
+        from nervox.modules.vision.decoders import GlobalAvgPoolDecoder
 
         # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         # os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"

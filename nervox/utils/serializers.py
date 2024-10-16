@@ -36,6 +36,7 @@ def serializer_dtype(obj: tf.DType):
         "__repr__": repr(obj),
     }
 
+
 def serializer_slice(obj: slice):
     if not isinstance(obj, slice):
         raise TypeError(
@@ -44,9 +45,9 @@ def serializer_slice(obj: slice):
             "\nReceived: {type(obj).__name__}"
         )
     return {
-        "__class__": 'slice',
-        "__module__": 'builtins',
-        "__init__": {'_args': (obj.start, obj.stop, obj.step)},
+        "__class__": "slice",
+        "__module__": "builtins",
+        "__init__": {"_args": (obj.start, obj.stop, obj.step)},
         "__repr__": repr(obj),
     }
 
@@ -86,10 +87,7 @@ class SerializerRegistry:
     SerializerRegistry.register(my_custom_serializer)\n"
     """
 
-    _serializers = {
-        tf.DType: serializer_dtype,
-        slice:  serializer_slice
-    }
+    _serializers = {tf.DType: serializer_dtype, slice: serializer_slice}
 
     @classmethod
     def register(cls, serializer: callable):
